@@ -1,0 +1,35 @@
+You can build webchanges as a native win32 executable the following (debian) way:
+
+---
+
+* mingw-3.4.5:
+	apt-get install mingw32
+
+* libiconv-1.11 (http://www.gnu.org/software/libiconv) **
+	CFLAGS="-Wall -O2" ./configure --host=i586-mingw32msvc \
+	    --prefix=/usr/i586-mingw32msvc/
+	make
+	make install
+
+* libxml2-2.6.27 (http://xmlsoft.org) **
+	CFLAGS="-Wall -O2" ./configure --host=i586-mingw32msvc \
+	    --prefix=/usr/i586-mingw32msvc/ --without-python
+	make
+	make install
+
+* wxWidgets 2.6.3 (http://www.wxwidgets.org)
+	./configure --with-msw --target=i586-mingw32msvc \
+	    --host=i586-mingw32msvc --build=i386-linux \
+	    --prefix=/usr/i586-mingw32msvc
+	make
+	make install
+
+* webchanges:
+	CFLAGS="-L/usr/i586-mingw32msvc/lib -DLIBXML_STATIC" ./configure --host=i586-mingw32msvc
+	make
+	cd src
+	i586-mingw32msvc-gcc evalxpath.o -o evalxpath.exe -lxml2 -liconv -lws2_32
+
+---
+
+** or install compiled versions from: http://www.zlatkovic.com/pub/libxml/

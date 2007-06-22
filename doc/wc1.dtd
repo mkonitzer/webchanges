@@ -1,0 +1,11 @@
+<!ELEMENT monitorfile (document*)>
+<!ATTLIST monitorfile name CDATA #REQUIRED>
+
+<!ELEMENT document (monitor*)>
+<!ATTLIST document url CDATA #REQUIRED>
+
+<!ELEMENT monitor (xpath,trigger?,interval?)>
+<!ATTLIST monitor name CDATA #REQUIRED>
+<!ELEMENT xpath (#PCDATA)>
+<!ELEMENT trigger (#PCDATA)>
+<!ELEMENT interval (#PCDATA)>

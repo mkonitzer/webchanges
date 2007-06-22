@@ -1,0 +1,7 @@
+i pkginfo
+d none bin 0770 root root
+f none bin/webchanges 0755 root root
+f none bin/evalxpath 0755 root root
+d none man 0770 root root
+d none man/man1 0770 root root
+f none man/man1/webchanges.1 0644 root root

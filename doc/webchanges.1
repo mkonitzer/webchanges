@@ -1,0 +1,83 @@
+.TH webchanges 1 LOCAL
+.SH NAME
+webchanges \- monitor parts of webpages for changes in content
+.SH SYNOPSIS
+.nf
+webchanges \fICOMMAND\fR [\fIOPTION\fR]... \fIFILE\fR...
+.fi
+.SH DESCRIPTION
+.ds wc \fBwebchanges\fR
+\*(wc - as its name says - gives you the ability to monitor parts of
+webpages for user-relevant changes.
+.br
+For each collection of webpages, the user has to write a so-called \fBmonitor file\fR once.
+This file describes, which documents on the web belong to the collection being monitored, and which parts of these documents are relevant.
+A single relevant part of a document is called \fBmonitor\fR.
+.br
+To be pedantic, \*(wc operates on the [X]HTML-parts of a webpage only (leaving images, animations, etc. out) and uses W3C's XPath 1.0 embedded in its own language to select those relevant parts.
+.br
+\*(wc can process multiple monitor \fIFILE\fRs successively.
+.SH COMMANDS
+When calling \*(wc, you have to specify exactly one of the following \fICOMMAND\fRs:
+.TP
+.B \-i
+initialize
+.br
+Initialize \fIFILE\fR by downloading all referenced documents into local cache.
+This is always the first step when working with a newborn monitor file.
+.TP
+.B \-c
+check
+.br
+Check each monitor in \fIFILE\fR for relevant changes and print a report to stdout.
+.TP
+.B \-u
+update
+.br
+Check each monitor in \fIFILE\fR for relevant changes and print a report to stdout.
+Each referenced document, that contains at least one triggered monitor, will be updated by downloading the current version into local cache.
+.TP
+.B \-r
+remove
+.br
+Remove all files in local cache, whose corresponding URLs are referenced in \fIFILE\fR; \fIFILE\fR itself is not removed.
+.TP
+.B \-V
+Display version & copyright information and exit.
+.TP
+.B \-h
+Display this help and exit.
+.SH OPTIONS
+Additionally you may specify one or more of the following \fIOPTION\fRs:
+.TP
+.B \-f
+force
+.br
+For commands \fB-c\fR and \fB-u\fR force checking of each monitor, regardless if necessary or not; apart from these two commands it has no effect.
+.TP
+.B \-q
+quiet
+.br
+Suppress all messages except from warnings and errors.
+.TP
+.B \-v
+verbose
+.br
+Repeat this option to increase the amount of messages, going to stdout.
+.SH DIAGNOSTICS
+\*(wc distinguishes between warnings like a failed download try (non-severe), and errors like an invalid monitor file (severe), while processing a given monitor file. In opposite to warnings, errors always cause an abnormal program termination.
+.br
+Normally though, when no error occured at all, the exit status is non-negative equalling the number of changed monitors. Although warnings might appear in the resulting output, they do not change the exit status.
+.br
+In case an error occurs, the exit status becomes (and stays) negative.
+.SH AUTHOR
+Written by Marius Konitzer.
+.br
+See the file \fIAUTHORS\fR in the \*(wc source distribution.
+.SH REPORTING BUGS
+Report bugs to <m.konitzer@gmx.de>.
+.SH COPYRIGHT
+Copyright \(co 2006, 2007 Marius Konitzer.
+This is free software. You may redistribute copies of it under the terms of
+the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
+There is NO WARRANTY, to the extent permitted by law.
