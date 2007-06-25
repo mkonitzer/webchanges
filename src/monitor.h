@@ -1,4 +1,4 @@
-/* $Id: monitor.h 256 2007-03-05 16:16:52Z marius $ */
+/* $Id$ */
 #ifndef __WC_MONITOR_H__
 #define __WC_MONITOR_H__
 

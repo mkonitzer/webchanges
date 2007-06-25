@@ -1,4 +1,4 @@
-/* $Id: vpair.c 253 2007-03-04 20:52:03Z marius $ */
+/* $Id$ */
 #include <libxml/HTMLparser.h>
 #include <libxml/xmlIO.h>
 #include <string.h>

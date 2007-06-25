@@ -1,4 +1,4 @@
-/* $Id: main.c 273 2007-03-14 01:47:35Z marius $ */
+/* $Id$ */
 #include <libxml/tree.h>
 #include <stdlib.h>
 #include <stdio.h>

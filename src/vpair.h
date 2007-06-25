@@ -1,4 +1,4 @@
-/* $Id: vpair.h 249 2007-03-01 02:41:36Z marius $ */
+/* $Id$ */
 #ifndef __WC_VPAIR_H__
 #define __WC_VPAIR_H__
 

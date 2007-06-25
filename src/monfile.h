@@ -1,4 +1,4 @@
-/* $Id: monfile.h 259 2007-03-06 02:18:18Z marius $ */
+/* $Id$ */
 #ifndef __WC_MONFILE_H__
 #define __WC_MONFILE_H__
 

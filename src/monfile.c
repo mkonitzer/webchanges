@@ -1,4 +1,4 @@
-/* $Id: monfile.c 256 2007-03-05 16:16:52Z marius $ */
+/* $Id$ */
 #include <libxml/xmlreader.h>
 #include <libxml/xmlstring.h>
 #include <libxml/parser.h>

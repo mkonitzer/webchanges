@@ -1,4 +1,4 @@
-/* $Id: monitor.c 256 2007-03-05 16:16:52Z marius $ */
+/* $Id$ */
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>
 #include <string.h>

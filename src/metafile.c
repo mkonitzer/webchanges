@@ -1,4 +1,4 @@
-/* $Id: metafile.c 257 2007-03-05 19:14:44Z marius $ */
+/* $Id$ */
 #include <libxml/xmlstring.h>
 #include <libxml/hash.h>
 #include <string.h>

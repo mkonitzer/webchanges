@@ -1,4 +1,4 @@
-/* $Id: evalxpath.c 258 2007-03-05 20:12:53Z marius $ */
+/* $Id$ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

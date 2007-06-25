@@ -1,4 +1,4 @@
-/* $Id: metafile.h 257 2007-03-05 19:14:44Z marius $ */
+/* $Id$ */
 #ifndef __WC_METAFILE_H__
 #define __WC_METAFILE_H__
 

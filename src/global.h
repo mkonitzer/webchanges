@@ -1,4 +1,4 @@
-/* $Id: global.h 220 2007-02-10 14:07:27Z marius $ */
+/* $Id$ */
 #ifndef __WC_GLOBAL_H__
 #define __WC_GLOBAL_H__
 
