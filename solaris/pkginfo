@@ -1,8 +1,0 @@
-PKG=webchanges
-NAME=webchanges - monitor parts of webpages for changes in content
-ARCH=sparc
-VERSION=0.7
-CATEGORY=application
-DESC=webchanges 0.7
-EMAIL=m.konitzer@gmx.de
-BASEDIR=/usr/local
