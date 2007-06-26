@@ -6,7 +6,7 @@ pkgfile=/tmp/webchanges-@VERSION@.$systype.pkg
 tmpdir=`mktemp -d` || exit 1
 if [ ${MAKE}x == x ] ; then MAKE="make" ; fi
 echo Building and installing webchanges for $systype in $tmpdir...
-./configure --prefix=$tmpdir  $@ && $MAKE && $MAKE install && {
+./configure --prefix=$tmpdir  $@ && $MAKE && $MAKE install-strip && {
     echo Installation complete! Building $pkgfile now...
     cp -p solaris/pkginfo $tmpdir
     pkgmk -o -r $tmpdir -f solaris/prototype -d $tmpdir
