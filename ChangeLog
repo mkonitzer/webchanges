@@ -1,3 +1,21 @@
+2007-06-27  Marius Konitzer  <m.konitzer@gmx.de>
+
+	Released 0.7.1.
+
+	* debian/*: First debianization of webchanges.
+
+	* solaris/makepkg.sh.in: Strip binaries before packaging.
+
+	* solaris/prototype: Fix mode/group of installed files and dirs.
+
+2007-06-26  Marius Konitzer  <m.konitzer@gmx.de>
+
+	* src/*.{c,h}: Precede source files with tedious license/copyright
+	notice.
+
+	* Makefile.am (EXTRA_DIST): Spurious 'solaris/.svn' no longer
+	included in 'make dist-{bzip2,gzip}'.
+
 2007-03-15  Marius Konitzer  <m.konitzer@gmx.de>
 
         Released 0.7.
