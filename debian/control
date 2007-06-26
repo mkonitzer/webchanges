@@ -1,0 +1,23 @@
+Source: webchanges
+Section: web
+Priority: extra
+Maintainer: Marius Konitzer <m.konitzer@gmx.de>
+Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libxml2-dev
+Standards-Version: 3.7.2
+
+Package: webchanges
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Monitor parts of webpages for changes in content
+ webchanges - as its name says - gives you the ability to monitor parts of
+ webpages for user-relevant changes. For each collection of webpages, the
+ user has to write a so-called monitor file once. This file describes,
+ which documents on the web belong to the collection being monitored, and
+ which parts of these documents are relevant. A single relevant part of a
+ document is called monitor.
+ .
+ To be pedantic, webchanges operates on the [X]HTML-parts of a webpage
+ only (leaving images, animations, etc. out) and uses W3C’s XPath 1.0
+ embedded in its own language to select those relevant parts.
+ .
+ See http://webchanges.sourceforge.net/ for more information.
