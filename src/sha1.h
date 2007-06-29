@@ -20,7 +20,14 @@
 # define SHA1_H 1
 
 # include <stdio.h>
-# include <stdint.h>
+
+#if defined(HAVE_STDINT_H)
+    #include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+    #include <inttypes.h>
+#else
+    typedef unsigned int uint32_t;
+#endif /* HAVE_STDINT_H */
 
 /* Structure to save state of computation between the single steps.  */
 struct sha1_ctx
