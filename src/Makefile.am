@@ -7,7 +7,7 @@ bin_PROGRAMS = webchanges evalxpath
 BUILT_SOURCES = monfile_dtd.inc
 MAINTAINERCLEANFILES = monfile_dtd.inc
 
-webchanges_SOURCES = main.c global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha.c sha.h
+webchanges_SOURCES = main.c global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
 evalxpath_SOURCES = evalxpath.c
 
 monfile_dtd.inc: ../doc/wc1.dtd
