@@ -24,6 +24,7 @@ AC_CHECK_HEADERS(getopt.h errno.h string.h time.h sys/stat.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+AC_C_BIGENDIAN
 
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
