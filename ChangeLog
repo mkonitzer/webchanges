@@ -1,3 +1,14 @@
+2007-07-06  Marius Konitzer  <m.konitzer@gmx.de>
+
+        Released 0.7.2.
+
+2007-06-29  Marius Konitzer  <m.konitzer@gmx.de>
+
+	* src/sha.{c,h}: Removed due to incorrect results on 64-bit
+	systems (thanks to Sören Köpping for reporting this bug).
+
+	* src/sha1.{c,h}: Added, using GNU TLS implementation as of now.
+
 2007-06-27  Marius Konitzer  <m.konitzer@gmx.de>
 
 	Released 0.7.1.
