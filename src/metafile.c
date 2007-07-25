@@ -61,7 +61,7 @@ metafile_open (const monfileptr mf)
 {
   metafileptr mef;
   /* allocate metafile struct */
-  mef = xmlMalloc (sizeof (metafile));
+  mef = (metafileptr) xmlMalloc (sizeof (metafile));
   if (mef == NULL)
     {
       outputf (ERROR, "[metafile] Out of memory\n");
@@ -96,9 +96,9 @@ metafile_read (metafileptr mef)
   while (fscanf (f, "<monitor name=\"%30[^\"]\" lastcheck=\"%d\" />\n",
 		 name, (int *) &chk) == 2)
     {
-      monmeta *mm;
+      monmetaptr mm;
       /* fill monmeta struct */
-      mm = xmlMalloc (sizeof (monmeta));
+      mm = (monmetaptr) xmlMalloc (sizeof (monmeta));
       mm->seen = 0;
       mm->lastchk = chk;
       xmlHashAddEntry (mef->monitors, name, mm);
@@ -147,10 +147,10 @@ int
 monitor_set_last_check (metafileptr mef, monitorptr m, time_t lastchk)
 {
   monmetaptr mm;
-  mm = xmlHashLookup (mef->monitors, monitor_get_name (m));
+  mm = (monmetaptr) xmlHashLookup (mef->monitors, monitor_get_name (m));
   if (mm == NULL)
     {
-      mm = xmlMalloc (sizeof (monmeta));
+      mm = (monmetaptr) xmlMalloc (sizeof (monmeta));
       mm->seen = 0;
     }
   mm->lastchk = lastchk;
@@ -161,7 +161,7 @@ time_t
 monitor_get_last_check (metafileptr mef, monitorptr m)
 {
   monmetaptr mm;
-  mm = xmlHashLookup (mef->monitors, monitor_get_name (m));
+  mm = (monmetaptr) xmlHashLookup (mef->monitors, monitor_get_name (m));
   return (mm == NULL ? 0 : mm->lastchk);
 }
 

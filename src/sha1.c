@@ -286,7 +286,7 @@ sha1_process_bytes (const void *buffer, size_t len, struct sha1_ctx *ctx)
 void
 sha1_process_block (const void *buffer, size_t len, struct sha1_ctx *ctx)
 {
-  const uint32_t *words = buffer;
+  const uint32_t *words = (uint32_t*) buffer;
   size_t nwords = len / sizeof (uint32_t);
   const uint32_t *endp = words + nwords;
   uint32_t x[16];

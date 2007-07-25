@@ -71,7 +71,7 @@ monfile_open (const char *filename)
 {
   monfileptr mf;
   /* allocate monfile struct */
-  mf = xmlMalloc (sizeof (monfile));
+  mf = (monfileptr) xmlMalloc (sizeof (monfile));
   if (mf == NULL)
     {
       outputf (ERROR, "[monfile] Out of memory\n");

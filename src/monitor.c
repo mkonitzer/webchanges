@@ -78,7 +78,7 @@ monitor_new (vpairptr vp, const xmlChar * name)
   if (vp == NULL || name == NULL)
     return NULL;
   /* fill monitor struct */
-  m = xmlMalloc (sizeof (monitor));
+  m = (monitorptr) xmlMalloc (sizeof (monitor));
   if (m == NULL)
     {
       outputf (ERROR, "[monitor] Out of memory\n");
