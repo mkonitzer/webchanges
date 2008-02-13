@@ -18,10 +18,12 @@
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
 #include <libxml/tree.h>
+#include <libxml/xmlstring.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <pwd.h>
 #include "monfile.h"
 #include "metafile.h"
 #include "monitor.h"
@@ -288,6 +290,58 @@ do_remove (monfileptr mf)
     }
   outdent (NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
+}
+
+/*
+ * Get the directory in which personal monitor/meta/cache files files reside
+ */
+static const xmlChar *
+get_config_dir (void)
+{
+  xmlChar *config_dir;
+#ifdef _WIN32
+  const char *appdatadir;
+  const char *profiledir;
+#else
+  const char *homedir;
+  struct passwd *pwd;
+#endif
+
+#ifdef _WIN32
+  /* Find location of user profile (rather than home directory) */
+  appdatadir = getenv ("APPDATA");
+  if (appdatadir != NULL)
+    {
+      config_dir = xmlStrdup (appdatadir);
+    }
+  else
+    {
+      profiledir = getenv ("USERPROFILE");
+      if (profiledir != NULL)
+        {
+	  config_dir = xmlStrdup (profiledir);
+	  config_dir = xmlStrcat (config_dir, "\\Application Data");
+        }
+      else
+	return NULL;
+    }
+  config_dir = xmlStrcat(config_dir, "\\webchanges");
+#else
+  /* If $HOME is set, use that */
+  homedir = getenv ("HOME");
+  if (homedir == NULL)
+    {
+      pwd = getpwuid (getuid ());
+      if (pwd != NULL)
+	homedir = pwd->pw_dir;
+      else
+	return NULL;
+    }
+  config_dir = xmlStrdup (homedir);
+  config_dir = xmlStrcat (config_dir, "/.webchanges");
+#endif
+
+  return config_dir;
 }
 
 void
