@@ -200,29 +200,28 @@ vpair_close (vpairptr vp)
   xmlSafeFree (vp->url);
   xmlSafeFree (vp->cache);
   xmlSafeFree (vp);
-  return;
 }
 
-xmlChar *
-vpair_get_url (vpairptr vp)
+const xmlChar *
+vpair_get_url (const vpairptr vp)
 {
   return vp->url;
 }
 
-xmlChar *
-vpair_get_cache (vpairptr vp)
+const xmlChar *
+vpair_get_cache (const vpairptr vp)
 {
   return vp->cache;
 }
 
-xmlDocPtr
-vpair_get_old_doc (vpairptr vp)
+const xmlDocPtr
+vpair_get_old_doc (const vpairptr vp)
 {
   return vp->olddoc;
 }
 
-xmlDocPtr
-vpair_get_cur_doc (vpairptr vp)
+const xmlDocPtr
+vpair_get_cur_doc (const vpairptr vp)
 {
   return vp->curdoc;
 }

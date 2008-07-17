@@ -22,11 +22,11 @@
 # include <stdio.h>
 
 #if defined(HAVE_STDINT_H)
-    #include <stdint.h>
+#include <stdint.h>
 #elif defined(HAVE_INTTYPES_H)
-    #include <inttypes.h>
+#include <inttypes.h>
 #else
-    typedef unsigned int uint32_t;
+typedef unsigned int uint32_t;
 #endif /* HAVE_STDINT_H */
 
 /* Structure to save state of computation between the single steps.  */
@@ -45,21 +45,21 @@ struct sha1_ctx
 
 
 /* Initialize structure containing state of computation. */
-extern void sha1_init_ctx (struct sha1_ctx *ctx);
+void sha1_init_ctx (struct sha1_ctx *ctx);
 
 /* Starting with the result of former calls of this function (or the
    initialization function update the context for the next LEN bytes
    starting at BUFFER.
    It is necessary that LEN is a multiple of 64!!! */
-extern void sha1_process_block (const void *buffer, size_t len,
-				struct sha1_ctx *ctx);
+void sha1_process_block (const void *buffer, size_t len,
+			 struct sha1_ctx *ctx);
 
 /* Starting with the result of former calls of this function (or the
    initialization function update the context for the next LEN bytes
    starting at BUFFER.
    It is NOT required that LEN is a multiple of 64.  */
-extern void sha1_process_bytes (const void *buffer, size_t len,
-				struct sha1_ctx *ctx);
+void sha1_process_bytes (const void *buffer, size_t len,
+			 struct sha1_ctx *ctx);
 
 /* Process the remaining bytes in the buffer and put result from CTX
    in first 20 bytes following RESBUF.  The result is always in little
@@ -68,7 +68,7 @@ extern void sha1_process_bytes (const void *buffer, size_t len,
 
    IMPORTANT: On some systems it is required that RESBUF be correctly
    aligned for a 32 bits value.  */
-extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf);
+void *sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf);
 
 
 /* Put result from CTX in first 20 bytes following RESBUF.  The result is
@@ -77,18 +77,18 @@ extern void *sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf);
 
    IMPORTANT: On some systems it is required that RESBUF is correctly
    aligned for a 32 bits value.  */
-extern void *sha1_read_ctx (const struct sha1_ctx *ctx, void *resbuf);
+void *sha1_read_ctx (const struct sha1_ctx *ctx, void *resbuf);
 
 
 /* Compute SHA1 message digest for bytes read from STREAM.  The
    resulting message digest number will be written into the 20 bytes
    beginning at RESBLOCK.  */
-extern int sha1_stream (FILE *stream, void *resblock);
+int sha1_stream (FILE * stream, void *resblock);
 
 /* Compute SHA1 message digest for LEN bytes beginning at BUFFER.  The
    result is always in little endian byte order, so that a byte-wise
    output yields to the wanted ASCII representation of the message
    digest.  */
-extern void *sha1_buffer (const char *buffer, size_t len, void *resblock);
+void *sha1_buffer (const char *buffer, size_t len, void *resblock);
 
 #endif

@@ -43,7 +43,7 @@ typedef struct
 typedef monmeta *monmetaptr;
 
 static xmlChar *
-monfile_to_metafile (xmlChar * filename)
+monfile_to_metafile (const xmlChar * filename)
 {
   int len, i;
   xmlChar *ret;
@@ -144,7 +144,7 @@ metafile_close (metafileptr mef)
 }
 
 int
-monitor_set_last_check (metafileptr mef, monitorptr m, time_t lastchk)
+monitor_set_last_check (metafileptr mef, const monitorptr m, time_t lastchk)
 {
   monmetaptr mm;
   mm = (monmetaptr) xmlHashLookup (mef->monitors, monitor_get_name (m));
@@ -158,7 +158,7 @@ monitor_set_last_check (metafileptr mef, monitorptr m, time_t lastchk)
 }
 
 time_t
-monitor_get_last_check (metafileptr mef, monitorptr m)
+monitor_get_last_check (const metafileptr mef, const monitorptr m)
 {
   monmetaptr mm;
   mm = (monmetaptr) xmlHashLookup (mef->monitors, monitor_get_name (m));
@@ -166,7 +166,7 @@ monitor_get_last_check (metafileptr mef, monitorptr m)
 }
 
 time_t
-monitor_get_next_check (metafileptr mef, monitorptr m)
+monitor_get_next_check (const metafileptr mef, const monitorptr m)
 {
   return (time_t) (monitor_get_last_check (mef, m) +
 		   monitor_get_interval (m));

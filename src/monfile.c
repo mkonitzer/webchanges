@@ -126,7 +126,7 @@ monfile_open (const char *filename)
 }
 
 int
-monfile_get_next_vpair (monfileptr mf, vpairptr * vp)
+monfile_get_next_vpair (const monfileptr mf, vpairptr * vp)
 {
   int read;
   /* process monfile @mf node-by-node (to get vpair) */
@@ -178,7 +178,7 @@ monfile_get_next_vpair (monfileptr mf, vpairptr * vp)
 }
 
 int
-monfile_get_next_monitor (monfileptr mf, monitorptr * mon)
+monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
 {
   int read, skipdoc = 0;
   monitorptr m = NULL;
@@ -297,14 +297,14 @@ monfile_close (monfileptr mf)
   xmlFree (mf);
 }
 
-xmlChar *
-monfile_get_filename (monfileptr mf)
+const xmlChar *
+monfile_get_filename (const monfileptr mf)
 {
   return mf->filename;
 }
 
-xmlChar *
-monfile_get_name (monfileptr mf)
+const xmlChar *
+monfile_get_name (const monfileptr mf)
 {
   return mf->name;
 }

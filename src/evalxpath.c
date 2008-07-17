@@ -180,12 +180,11 @@ main (int argc, char **argv)
   /* init libxml */
   xmlInitParser ();
   LIBXML_TEST_VERSION
-
-  /* register our own error function */
-  xmlSetGenericErrorFunc (NULL, ownxmlErrorFunc);
+    /* register our own error function */
+    xmlSetGenericErrorFunc (NULL, ownxmlErrorFunc);
 
   /* (download and) parse html document */
-  /*    doc = htmlReadFile(argv[1], NULL, HTML_PARSE_NOBLANKS);*/
+  /*    doc = htmlReadFile(argv[1], NULL, HTML_PARSE_NOBLANKS); */
   doc = htmlParseFile (argv[1], NULL);
   if (doc == NULL)
     {

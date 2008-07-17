@@ -190,7 +190,7 @@ do_check (monfileptr mf, int update)
 {
   monitorptr m;
   metafileptr mef;
-  xmlChar *mfname;
+  const xmlChar *mfname;
   int ret, count = 0;
   vpairptr lastvp = NULL;
   /* read monitor file @mf */
@@ -203,7 +203,7 @@ do_check (monfileptr mf, int update)
   while ((ret = monfile_get_next_monitor (mf, &m)) != RET_ERROR)
     {
       time_t nextchk;
-      xmlChar *name;
+      const xmlChar *name;
       if (ret == RET_EOF)
 	break;
       /* we obtained a monitor @m */
@@ -318,14 +318,14 @@ get_config_dir (void)
     {
       profiledir = getenv ("USERPROFILE");
       if (profiledir != NULL)
-        {
+	{
 	  config_dir = xmlStrdup (profiledir);
 	  config_dir = xmlStrcat (config_dir, "\\Application Data");
-        }
+	}
       else
 	return NULL;
     }
-  config_dir = xmlStrcat(config_dir, "\\webchanges");
+  config_dir = xmlStrcat (config_dir, "\\webchanges");
 #else
   /* If $HOME is set, use that */
   homedir = getenv ("HOME");
@@ -386,7 +386,7 @@ main (int argc, char **argv)
     {
       switch (c)
 	{
-	/* commands */
+	  /* commands */
 	case 'i':		/* init */
 	  action = (action == NONE ? INIT : TOOMANY);
 	  break;
@@ -405,7 +405,7 @@ main (int argc, char **argv)
 	case 'V':		/* version info */
 	  version ();
 	  return 0;
-	/* options */
+	  /* options */
 	case 'f':		/* force */
 	  force = 1;
 	  break;
@@ -415,7 +415,7 @@ main (int argc, char **argv)
 	case 'q':		/* quiet */
 	  lvl_verbos = WARN;
 	  break;
-	/* errors */
+	  /* errors */
 	case '?':
 	  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
 	  usage (stderr);
