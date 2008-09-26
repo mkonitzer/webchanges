@@ -23,16 +23,18 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include <config.h>
-
-#include "sha1.h"
-
 #include <stddef.h>
 #include <string.h>
+#include "sha1.h"
+#include "config.h"
 
-#if USE_UNLOCKED_IO
-# include "unlocked-io.h"
-#endif
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#else
+typedef unsigned int uint32_t;
+#endif /* HAVE_STDINT_H */
 
 #ifdef WORDS_BIGENDIAN
 # define SWAP(n) (n)
@@ -45,6 +47,20 @@
 #if BLOCKSIZE % 64 != 0
 # error "invalid BLOCKSIZE"
 #endif
+
+/* Structure to save state of computation between the single steps.  */
+struct sha1_ctx
+{
+  uint32_t A;
+  uint32_t B;
+  uint32_t C;
+  uint32_t D;
+  uint32_t E;
+
+  uint32_t total[2];
+  uint32_t buflen;
+  uint32_t buffer[32];
+};
 
 /* This array contains the bytes used to pad the buffer to the next
    64-byte boundary.  (RFC 1321, 3.1: Step 1)  */

@@ -16,33 +16,12 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#ifndef SHA1_H
-# define SHA1_H 1
+#ifndef __WC_SHA1_H__
+#define __WC_SHA1_H__
 
 # include <stdio.h>
 
-#if defined(HAVE_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-typedef unsigned int uint32_t;
-#endif /* HAVE_STDINT_H */
-
-/* Structure to save state of computation between the single steps.  */
-struct sha1_ctx
-{
-  uint32_t A;
-  uint32_t B;
-  uint32_t C;
-  uint32_t D;
-  uint32_t E;
-
-  uint32_t total[2];
-  uint32_t buflen;
-  uint32_t buffer[32];
-};
-
+struct sha1_ctx;
 
 /* Initialize structure containing state of computation. */
 void sha1_init_ctx (struct sha1_ctx *ctx);
@@ -91,4 +70,4 @@ int sha1_stream (FILE * stream, void *resblock);
    digest.  */
 void *sha1_buffer (const char *buffer, size_t len, void *resblock);
 
-#endif
+#endif /* __WC_SHA1_H__ */
