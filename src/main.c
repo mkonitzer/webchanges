@@ -23,7 +23,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <pwd.h>
+#endif
 #include "monfile.h"
 #include "metafile.h"
 #include "monitor.h"
