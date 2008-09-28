@@ -335,21 +335,18 @@ basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list)
   return list;
 }
 
-static void
-basedir_safefree (char *filename)
-{
-  if (filename != NULL)
-    free (filename);
-}
-
 void
 basedir_close (basedirptr bd)
 {
   if (bd == NULL)
     return;
-  basedir_safefree (bd->base_dir);
-  basedir_safefree (bd->cache_dir);
-  basedir_safefree (bd->metafile_dir);
-  basedir_safefree (bd->monfile_dir);
+  if (bd->base_dir != NULL)
+    free (bd->base_dir);
+  if (bd->cache_dir != NULL)
+    free (bd->cache_dir);
+  if (bd->metafile_dir != NULL)
+    free (bd->metafile_dir);
+  if (bd->monfile_dir != NULL)
+    free (bd->monfile_dir);
   xmlSafeFree (bd);
 }
