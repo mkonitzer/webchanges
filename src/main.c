@@ -305,7 +305,7 @@ usage (FILE * f)
   fprintf (f, "  -V  display version & copyright information and exit\n\n");
   fprintf (f, "Options:\n");
   fprintf (f, "  -f  force checking/updating of all monitors now\n");
-  fprintf (f, "  -p  set base directory (for monitor/metadata/cache files)");
+  fprintf (f, "  -b  set base directory (for monitor/metadata/cache files)\n");
   fprintf (f, "  -q  quiet mode, suppress most stdout messages\n");
   fprintf (f, "  -v  verbose mode, repeat to increase stdout messages\n");
 }
@@ -333,7 +333,7 @@ main (int argc, char **argv)
 
   /* parse cmdline args */
   opterr = 0;			/* prevent getopt from printing errors */
-  while ((c = getopt (argc, argv, "icurhVfp:qv")) != -1)
+  while ((c = getopt (argc, argv, "icurhVfb:qv")) != -1)
     {
       switch (c)
 	{
@@ -360,8 +360,13 @@ main (int argc, char **argv)
 	case 'f':		/* force */
 	  force = 1;
 	  break;
-	case 'p':		/* base directory */
-	  /* FIXME: Don't allow double definitions */
+	case 'b':		/* base directory */
+          if (userdir != NULL)
+            {
+              fprintf (stderr, "More than one base directory specified, exiting.\n");
+              usage (stderr);
+              return -1;
+            }
 	  userdir = strdup (optarg);
 	  break;
 	case 'v':		/* verbose */
@@ -457,7 +462,7 @@ main (int argc, char **argv)
       xmlListPopFront (filelist);
 
       /* Open monitor file. */
-      mf = monfile_open (filename);
+      mf = monfile_open (filename, basedir);
       if (mf == NULL)
 	{
 	  /* Skip this monitor file. */
