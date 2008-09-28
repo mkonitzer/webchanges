@@ -21,14 +21,20 @@
 #ifndef __WC_BASEDIR_H__
 #define __WC_BASEDIR_H__
 
+#include <libxml/list.h>
+
 typedef struct _basedir basedir;
 typedef basedir *basedirptr;
 
 basedirptr basedir_open (const char *dirname);
-char *basedir_get_monfile (const basedirptr bd, const char *fn);
-char *basedir_get_metafile (const basedirptr bd, const char *fn);
-char *basedir_get_cache (const basedirptr bd, const char *fn);
-int basedir_usable (const basedirptr bd);
+char *basedir_buildpath_monfile (const basedirptr bd, const char *filename);
+char *basedir_buildpath_metafile (const basedirptr bd, const char *filename);
+char *basedir_buildpath_cache (const basedirptr bd, const char *filename);
+xmlListPtr basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list);
+int basedir_is_curdir (const basedirptr bd);
+int basedir_is_prepared (const basedirptr bd);
+int basedir_prepare (const basedirptr bd);
+void basedir_close (basedirptr bd);
 void basedir_safefree (char *filename);
 
 #endif /* __WC_BASEDIR_H__ */

@@ -19,9 +19,12 @@
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
 #include <libxml/xmlmemory.h>
+#include <libxml/list.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <errno.h>
 #include <string.h>
 #ifndef _WIN32
 #include <pwd.h>
@@ -64,10 +67,10 @@ dir_exists (const char *dirname)
 {
   struct stat st;
   if (stat (dirname, &st) != 0)
-    return RET_ERROR;
+    return 0;
   if (S_ISDIR (st.st_mode) == 0)
-    return RET_ERROR;
-  return RET_OK;
+    return 0;
+  return 1;
 }
 
 /*
@@ -78,10 +81,10 @@ file_exists (const char *filename)
 {
   struct stat st;
   if (stat (filename, &st) != 0)
-    return RET_ERROR;
+    return 0;
   if (S_ISREG (st.st_mode) == 0)
-    return RET_ERROR;
-  return RET_OK;
+    return 0;
+  return 1;
 }
 
 /*
@@ -140,45 +143,57 @@ basedir_open (const char *dirname)
       outputf (ERROR, "[basedir] Out of memory\n");
       return NULL;
     }
-  /* (1) Take the user-specified directory */
+  memset (bd, 0, sizeof (basedir));
+
   if (dirname != NULL)
     {
-      if (dir_exists (dirname) != RET_OK)
+      /* Try to take user-specified directory */
+      if (strcmp (dirname, ".") == 0)
 	{
-	  outputf (ERROR, "[basedir] Base directory %s does not exist.\n",
+	  /* Special case: "." means "take current directory */
+	  outputf (INFO,
+		   "[basedir] Using current directory as base directory.\n");
+	  return bd;
+	}
+      if (dir_exists (dirname) == 0)
+	{
+	  outputf (ERROR,
+		   "[basedir] Base directory '%s' does not exist, please create it first.\n",
 		   dirname);
 	  xmlFree (bd);
 	  return NULL;
 	}
-      outputf (INFO, "[basedir] Using base directory %s.\n", dirname);
+      outputf (INFO, "[basedir] Using base directory '%s'.\n", dirname);
       bd->base_dir = strdup (dirname);
     }
   else
     {
-      /* (2) Try to get default directory or */
-      bd->base_dir = get_default_basedir ();
-      if (bd->base_dir != NULL || dir_exists (bd->base_dir) != RET_OK)
+      /* Try to get default directory */
+      char *defaultbase = get_default_basedir ();
+      if (defaultbase == NULL || dir_exists (defaultbase) == 0)
 	{
-	  /* (3) Use current directory (fallback option) */
-	  if (bd->base_dir != NULL)
-	    outputf (INFO,
-		     "[basedir] Default base directory %s does not exist.\n",
-		     bd->base_dir);
+	  /* Take current directory (as fallback) */
+	  if (defaultbase != NULL)
+	    {
+	      outputf (INFO,
+		       "[basedir] Default base directory '%s' does not exist, please create it first.\n",
+		       defaultbase);
+	      free (defaultbase);
+              defaultbase = NULL;
+	    }
 	  else
-	    outputf (INFO,
+	    outputf (WARN,
 		     "[basedir] Could not determine default base directory.\n");
-	  outputf (INFO, "[basedir] Falling back to current directory.\n");
-	  xmlSafeFree (bd->base_dir);
-	  bd->base_dir = NULL;
-	  bd->cache_dir = NULL;
-	  bd->metafile_dir = NULL;
-	  bd->monfile_dir = NULL;
+	  outputf (INFO,
+		   "[basedir] Using current directory as base directory.\n");
 	  return bd;
 	}
-      outputf (INFO, "[basedir] Using default base directory %s.\n",
-	       bd->base_dir);
-      bd->base_dir = strdup (bd->base_dir);
+      /* Take just determined default directory */
+      outputf (INFO, "[basedir] Using default base directory '%s'.\n",
+	       defaultbase);
+      bd->base_dir = defaultbase;
     }
+
   /* Fill basedir struct. */
   bd->cache_dir = dir_join (bd->base_dir, "cache");
   bd->metafile_dir = dir_join (bd->base_dir, "meta");
@@ -187,54 +202,154 @@ basedir_open (const char *dirname)
 }
 
 /*
- * Check if the specified directory has a valid base directory structure.
+ * Check if base directory is current directory.
  */
 int
-basedir_usable (const basedirptr basedir)
+basedir_is_curdir (const basedirptr bd)
 {
-  /* TODO: implement me! */
-  return RET_ERROR;
+  if (bd == NULL)
+    return 0;
+  return (bd->base_dir == NULL ? 1 : 0);
+}
+
+/*
+ * Check if base directory has a valid directory structure.
+ */
+int
+basedir_is_prepared (const basedirptr bd)
+{
+  if (bd == NULL)
+    return 0;
+  /* Current directory is prepared by definition. */
+  if (bd->base_dir == NULL)
+    return 1;
+  if (dir_exists (bd->cache_dir) == 0)
+    return 0;
+  if (dir_exists (bd->metafile_dir) == 0)
+    return 0;
+  if (dir_exists (bd->monfile_dir) == 0)
+    return 0;
+  return 1;
+}
+
+/*
+ * Create directory if it doesn't already exists.
+ */
+static int
+dir_safe_create (const char *dirname)
+{
+  if (dir_exists (dirname) == 0)
+    {
+      outputf (INFO, "[basedir] Directory '%s' does not exist, creating.\n",
+	       dirname);
+      if (mkdir (dirname, 0755) != 0)
+	{
+	  outputf (ERROR, "[basedir] Could not create directory '%s'.\n",
+		   dirname);
+	  return RET_ERROR;
+	}
+    }
+  return RET_OK;
+}
+
+/*
+ * Create directory structure in base directory.
+ */
+int
+basedir_prepare (const basedirptr bd)
+{
+  if (bd == NULL || bd->cache_dir == NULL || bd->metafile_dir == NULL
+      || bd->monfile_dir == NULL)
+    return RET_ERROR;
+  if (dir_safe_create (bd->cache_dir) != RET_OK)
+    return RET_ERROR;
+  if (dir_safe_create (bd->metafile_dir) != RET_OK)
+    return RET_ERROR;
+  if (dir_safe_create (bd->monfile_dir) != RET_OK)
+    return RET_ERROR;
+  return RET_OK;
 }
 
 char *
-basedir_get_monfile (const basedirptr bd, const char *filename)
+basedir_buildpath_monfile (const basedirptr bd, const char *filename)
 {
-  /* Search current directory first */
-  if (file_exists (filename))
-    return strdup (filename);
-  /* Search base directory then */
   if (bd->monfile_dir == NULL)
-    return NULL;
-  return dir_join (strdup (bd->monfile_dir), filename);
+    return strdup (filename);
+  return dir_join (bd->monfile_dir, filename);
 }
 
 char *
-basedir_get_metafile (const basedirptr bd, const char *filename)
+basedir_buildpath_metafile (const basedirptr bd, const char *filename)
 {
-  /* Search current directory first */
-  if (file_exists (filename))
-    return strdup (filename);
-  /* Search base directory then */
   if (bd->metafile_dir == NULL)
-    return NULL;
-  return dir_join (strdup (bd->metafile_dir), filename);
+    return strdup (filename);
+  return dir_join (bd->metafile_dir, filename);
 }
 
 char *
-basedir_get_cache (const basedirptr bd, const char *filename)
+basedir_buildpath_cache (const basedirptr bd, const char *filename)
 {
-  /* Search current directory first */
-  if (file_exists (filename))
-    return strdup (filename);
-  /* Search base directory then */
   if (bd->cache_dir == NULL)
-    return NULL;
-  return dir_join (strdup (bd->cache_dir), filename);
+    return strdup (filename);
+  return dir_join (bd->cache_dir, filename);
 }
 
-void
+xmlListPtr
+basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list)
+{
+  DIR *dir = NULL;
+  struct dirent *entry = NULL;
+
+  if (bd == NULL || bd->monfile_dir == NULL)
+    return NULL;
+
+  /* Open monitor file directory for reading. */
+  dir = opendir (bd->monfile_dir);
+  if (dir == NULL)
+    {
+      outputf (ERROR,
+	       "[basedir] Could not open monitor file directory '%s' (%s)\n",
+	       bd->monfile_dir, strerror (errno));
+      return NULL;
+    }
+
+  /* Check each entry for file property. */
+  outputf (DEBUG, "[basedir] Processing monitor file directory '%s'.\n",
+	   bd->monfile_dir);
+  entry = readdir (dir);
+  while (entry != NULL)
+    {
+      char *fullpath = dir_join (bd->monfile_dir, entry->d_name);
+      if (file_exists (fullpath) != 0)
+	{
+	  outputf (DEBUG, "[basedir] Adding monitor file '%s'.\n",
+		   entry->d_name);
+	  xmlListAppend (list, entry->d_name);
+	}
+      else
+	outputf (DEBUG, "[basedir] Ignoring directory entry '%s'.\n",
+		 entry->d_name);
+      entry = readdir (dir);
+    }
+  closedir (dir);
+  return list;
+}
+
+static void
 basedir_safefree (char *filename)
 {
   if (filename != NULL)
     free (filename);
+}
+
+void
+basedir_close (basedirptr bd)
+{
+  if (bd == NULL)
+    return;
+  basedir_safefree (bd->base_dir);
+  basedir_safefree (bd->cache_dir);
+  basedir_safefree (bd->metafile_dir);
+  basedir_safefree (bd->monfile_dir);
+  xmlSafeFree (bd);
 }

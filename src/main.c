@@ -19,6 +19,7 @@
 
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
+#include <libxml/list.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -99,7 +100,7 @@ xml_errfunc (void *ctx, const char *msg, ...)
 /*
  * print results, comparing @oldres to @curres
  */
-void
+static void
 print_results (int l, xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres)
 {
   int i, j;
@@ -158,7 +159,7 @@ print_results (int l, xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres)
 /*
  * initialize: download all referenced documents
  */
-int
+static int
 do_init (monfileptr mf)
 {
   int ret;
@@ -184,7 +185,7 @@ do_init (monfileptr mf)
 /*
  * check: print, which monitors have changed and how (and @update cache)
  */
-int
+static int
 do_check (monfileptr mf, int update)
 {
   monitorptr m;
@@ -269,7 +270,7 @@ do_check (monfileptr mf, int update)
 /*
  * remove: remove referenced files from cache
  */
-int
+static int
 do_remove (monfileptr mf)
 {
   int ret;
@@ -291,7 +292,7 @@ do_remove (monfileptr mf)
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
-void
+static void
 usage (FILE * f)
 {
   fprintf (f, "Usage: webchanges COMMAND [OPTION]... FILE...\n\n");
@@ -309,7 +310,7 @@ usage (FILE * f)
   fprintf (f, "  -v  verbose mode, repeat to increase stdout messages\n");
 }
 
-void
+static void
 version (void)
 {
   printf ("webchanges version %s\n", VERSION);
@@ -322,7 +323,7 @@ version (void)
 int
 main (int argc, char **argv)
 {
-  int c, i, count = 0;
+  int c, count = 0;
   int action = NONE;
   basedirptr basedir = NULL;
   char *userdir = NULL;
@@ -360,6 +361,7 @@ main (int argc, char **argv)
 	  force = 1;
 	  break;
 	case 'p':		/* base directory */
+	  /* FIXME: Don't allow double definitions */
 	  userdir = strdup (optarg);
 	  break;
 	case 'v':		/* verbose */
@@ -390,41 +392,81 @@ main (int argc, char **argv)
       return -1;
     }
 
-  /* setup basedir */
+  /* Setup basedir */
   basedir = basedir_open (userdir);
   if (userdir != NULL)
-    free (userdir);
+    {
+      free (userdir);
+      userdir = NULL;
+    }
   if (basedir == NULL)
     {
       fprintf (stderr, "Could not determine base directory.\n");
       usage (stderr);
       return -1;
     }
-
-  /* no monitor files files given? */
-  if (argc - optind == 0)
+  /* Monitor files must be passed on cmdline when using current directory. */
+  if (basedir_is_curdir (basedir) && argc - optind == 0)
     {
       fprintf (stderr, "No monitor file(s) given, exiting.\n");
+      usage (stderr);
+      basedir_close (basedir);
+      return -1;
+    }
+  /* Prepare base directory if necessary. */
+  if (basedir_is_prepared (basedir) == 0)
+    {
+      if (basedir_prepare (basedir) != RET_OK)
+	{
+	  outputf (INFO, "Could not prepare base directory, exiting.\n");
+	  basedir_close (basedir);
+	  return -1;
+	}
+    }
+
+  /* Build file list ... */
+  xmlListPtr filelist;
+  filelist = xmlListCreate (NULL, NULL);
+  if (argc - optind > 0)
+    {
+      int i;
+      /* ... either from the user-specified files on cmdline ... */
+      for (i = optind; i < argc; i++)
+	xmlListAppend (filelist, strdup (argv[i]));
+    }
+  else
+    /* ... or by taking all monitor files in basedir. */
+    basedir_get_all_monfiles (basedir, filelist);
+  if (xmlListEmpty (filelist) != 0)
+    {
+      fprintf (stderr, "No monitor files found, exiting.\n");
       usage (stderr);
       return -1;
     }
 
-  /* walk through given monitor files */
-  for (i = optind; i < argc; i++)
+  /* Walk through all monitor files found. */
+  while (xmlListEmpty (filelist) == 0)
     {
       int ret = 0;
       monfileptr mf;
-      /* open monitor file @mf */
-      mf = monfile_open (argv[i]);
+      xmlLinkPtr lk;
+      const char *filename;
+      /* Get next monitor file from file list */
+      lk = xmlListFront (filelist);
+      filename = xmlLinkGetData (lk);
+      xmlListPopFront (filelist);
+
+      /* Open monitor file. */
+      mf = monfile_open (filename);
       if (mf == NULL)
 	{
-	  /* skip this monitor file */
-	  outputf (ERROR, "Error reading monitor file %s\n\n", argv[i]);
+	  /* Skip this monitor file. */
+	  outputf (ERROR, "Error reading monitor file %s\n\n", filename);
 	  count = -1;
 	  continue;
 	}
-      /* process monitor file @mf */
-      outputf (INFO, "Processing monitor file %s\n", argv[i]);
+      /* Process monitor file. */
+      outputf (INFO, "Processing monitor file %s\n", filename);
       switch (action)
 	{
 	case INIT:
@@ -441,9 +483,10 @@ main (int argc, char **argv)
 	  break;
 	}
       count = (ret < 0 || count < 0 ? -1 : count + ret);
-      /* close monitor file @mf */
+      /* Ready to close monitor file. */
       monfile_close (mf);
     }
+  xmlListDelete (filelist);
   xmlCleanupParser ();
   return count;
 }
