@@ -35,6 +35,5 @@ int basedir_is_curdir (const basedirptr bd);
 int basedir_is_prepared (const basedirptr bd);
 int basedir_prepare (const basedirptr bd);
 void basedir_close (basedirptr bd);
-void basedir_safefree (char *filename);
 
 #endif /* __WC_BASEDIR_H__ */
