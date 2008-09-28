@@ -19,16 +19,13 @@
 
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
-#include <errno.h>
-#ifndef _WIN32
-#include <pwd.h>
-#endif
 #include "monfile.h"
 #include "metafile.h"
 #include "monitor.h"
+#include "basedir.h"
 #include "global.h"
 #include "config.h"
 
@@ -294,58 +291,6 @@ do_remove (monfileptr mf)
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
-/*
- * Get the directory in which personal monitor/meta/cache files files reside
- */
-static const xmlChar *
-get_config_dir (void)
-{
-  xmlChar *config_dir;
-#ifdef _WIN32
-  const char *appdatadir;
-  const char *profiledir;
-#else
-  const char *homedir;
-  struct passwd *pwd;
-#endif
-
-#ifdef _WIN32
-  /* Find location of user profile (rather than home directory) */
-  appdatadir = getenv ("APPDATA");
-  if (appdatadir != NULL)
-    {
-      config_dir = xmlStrdup (appdatadir);
-    }
-  else
-    {
-      profiledir = getenv ("USERPROFILE");
-      if (profiledir != NULL)
-	{
-	  config_dir = xmlStrdup (profiledir);
-	  config_dir = xmlStrcat (config_dir, "\\Application Data");
-	}
-      else
-	return NULL;
-    }
-  config_dir = xmlStrcat (config_dir, "\\webchanges");
-#else
-  /* If $HOME is set, use that */
-  homedir = getenv ("HOME");
-  if (homedir == NULL)
-    {
-      pwd = getpwuid (getuid ());
-      if (pwd != NULL)
-	homedir = pwd->pw_dir;
-      else
-	return NULL;
-    }
-  config_dir = xmlStrdup (homedir);
-  config_dir = xmlStrcat (config_dir, "/.webchanges");
-#endif
-
-  return config_dir;
-}
-
 void
 usage (FILE * f)
 {
@@ -359,6 +304,7 @@ usage (FILE * f)
   fprintf (f, "  -V  display version & copyright information and exit\n\n");
   fprintf (f, "Options:\n");
   fprintf (f, "  -f  force checking/updating of all monitors now\n");
+  fprintf (f, "  -p  set base directory (for monitor/metadata/cache files)");
   fprintf (f, "  -q  quiet mode, suppress most stdout messages\n");
   fprintf (f, "  -v  verbose mode, repeat to increase stdout messages\n");
 }
@@ -378,13 +324,15 @@ main (int argc, char **argv)
 {
   int c, i, count = 0;
   int action = NONE;
+  basedirptr basedir = NULL;
+  char *userdir = NULL;
 
   /* register error function */
   xmlSetGenericErrorFunc (NULL, xml_errfunc);
 
   /* parse cmdline args */
   opterr = 0;			/* prevent getopt from printing errors */
-  while ((c = getopt (argc, argv, "icurhVfqv")) != -1)
+  while ((c = getopt (argc, argv, "icurhVfp:qv")) != -1)
     {
       switch (c)
 	{
@@ -411,6 +359,9 @@ main (int argc, char **argv)
 	case 'f':		/* force */
 	  force = 1;
 	  break;
+	case 'p':		/* base directory */
+	  userdir = strdup (optarg);
+	  break;
 	case 'v':		/* verbose */
 	  lvl_verbos++;
 	  break;
@@ -425,7 +376,7 @@ main (int argc, char **argv)
 	}
     }
 
-  /* do we have a valid list of arguments? */
+  /* do we have a unique command? */
   if (action == NONE)
     {
       fprintf (stderr, "No command given, exiting.\n");
@@ -438,7 +389,20 @@ main (int argc, char **argv)
       usage (stderr);
       return -1;
     }
-  else if (argc - optind == 0)
+
+  /* setup basedir */
+  basedir = basedir_open (userdir);
+  if (userdir != NULL)
+    free (userdir);
+  if (basedir == NULL)
+    {
+      fprintf (stderr, "Could not determine base directory.\n");
+      usage (stderr);
+      return -1;
+    }
+
+  /* no monitor files files given? */
+  if (argc - optind == 0)
     {
       fprintf (stderr, "No monitor file(s) given, exiting.\n");
       usage (stderr);
@@ -448,7 +412,7 @@ main (int argc, char **argv)
   /* walk through given monitor files */
   for (i = optind; i < argc; i++)
     {
-      int ret;
+      int ret = 0;
       monfileptr mf;
       /* open monitor file @mf */
       mf = monfile_open (argv[i]);
