@@ -131,7 +131,7 @@ monitor_evaluate (monitorptr m)
 }
 
 static int
-nodes_equal (xmlNodePtr n1, xmlNodePtr n2)
+nodes_equal (const xmlNodePtr n1, const xmlNodePtr n2)
 {
   /* compare memory pointers */
   if (n1 == n2)
@@ -166,7 +166,7 @@ nodes_equal (xmlNodePtr n1, xmlNodePtr n2)
 }
 
 static int
-results_equal (xmlXPathObjectPtr obj1, xmlXPathObjectPtr obj2)
+results_equal (const xmlXPathObjectPtr obj1, const xmlXPathObjectPtr obj2)
 {
   int i;
   /* results must be non-NULL */
@@ -202,7 +202,7 @@ results_equal (xmlXPathObjectPtr obj1, xmlXPathObjectPtr obj2)
 }
 
 int
-monitor_triggered (monitorptr m)
+monitor_triggered (const monitorptr m)
 {
   double v1, v2;
   /* results must be non-NULL */
@@ -348,32 +348,32 @@ monitor_set_trigger (monitorptr m, const xmlChar * trigger)
   return RET_OK;
 }
 
-xmlChar *
-monitor_get_name (monitorptr m)
+const xmlChar *
+monitor_get_name (const monitorptr m)
 {
   return m->name;
 }
 
-xmlXPathObjectPtr
-monitor_get_old_result (monitorptr m)
+const xmlXPathObjectPtr
+monitor_get_old_result (const monitorptr m)
 {
   return m->oldres;
 }
 
-xmlXPathObjectPtr
-monitor_get_cur_result (monitorptr m)
+const xmlXPathObjectPtr
+monitor_get_cur_result (const monitorptr m)
 {
   return m->curres;
 }
 
-vpairptr
-monitor_get_vpair (monitorptr m)
+const vpairptr
+monitor_get_vpair (const monitorptr m)
 {
   return m->vp;
 }
 
 unsigned int
-monitor_get_interval (monitorptr m)
+monitor_get_interval (const monitorptr m)
 {
   return m->ival;
 }

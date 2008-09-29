@@ -26,13 +26,16 @@
 #include "monfile.h"
 #include "monitor.h"
 #include "vpair.h"
+#include "basedir.h"
 #include "global.h"
 
 struct _monfile
 {
   /* user-filled variables */
-  xmlChar *filename;
+  char *filename;
+  char *fullpath;
   xmlChar *name;
+  basedirptr bd;
   /* state variables */
   xmlTextReaderPtr reader;
   vpairptr vp;
@@ -67,9 +70,11 @@ entity_loader (const char *url, const char *id, xmlParserCtxtPtr ctx)
 }
 
 monfileptr
-monfile_open (const char *filename)
+monfile_open (const char *filename, const basedirptr bd)
 {
   monfileptr mf;
+  if (filename == NULL || bd == NULL)
+    return NULL;
   /* allocate monfile struct */
   mf = (monfileptr) xmlMalloc (sizeof (monfile));
   if (mf == NULL)
@@ -79,13 +84,15 @@ monfile_open (const char *filename)
     }
   /* fill monfile struct */
   memset (mf, 0, sizeof (monfile));
-  mf->filename = xmlCharStrdup (filename);
+  mf->filename = strdup (filename);
+  mf->fullpath = basedir_buildpath_monfile (bd, filename);
+  mf->bd = bd;
   /* register entity loader */
   if (default_loader == NULL)
     default_loader = xmlGetExternalEntityLoader ();
   xmlSetExternalEntityLoader (entity_loader);
   /* open monitor file for validated parsing */
-  mf->reader = xmlReaderForFile (filename, NULL, XML_PARSE_NOENT |
+  mf->reader = xmlReaderForFile (mf->fullpath, NULL, XML_PARSE_NOENT |
 				 XML_PARSE_DTDATTR | XML_PARSE_DTDVALID);
   if (mf->reader == NULL)
     {
@@ -126,7 +133,7 @@ monfile_open (const char *filename)
 }
 
 int
-monfile_get_next_vpair (monfileptr mf, vpairptr * vp)
+monfile_get_next_vpair (const monfileptr mf, vpairptr * vp)
 {
   int read;
   /* process monfile @mf node-by-node (to get vpair) */
@@ -149,7 +156,7 @@ monfile_get_next_vpair (monfileptr mf, vpairptr * vp)
 	      xmlChar *url = xmlTextReaderGetAttribute (mf->reader,
 							BAD_CAST "url");
 	      /* open version pair */
-	      mf->vp = vpair_open (url);
+	      mf->vp = vpair_open (url, mf->bd);
 	      xmlSafeFree (url);
 	      if (mf->vp == NULL)
 		return RET_WARNING;
@@ -178,7 +185,7 @@ monfile_get_next_vpair (monfileptr mf, vpairptr * vp)
 }
 
 int
-monfile_get_next_monitor (monfileptr mf, monitorptr * mon)
+monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
 {
   int read, skipdoc = 0;
   monitorptr m = NULL;
@@ -204,7 +211,7 @@ monfile_get_next_monitor (monfileptr mf, monitorptr * mon)
 	      xmlChar *url = xmlTextReaderGetAttribute (mf->reader,
 							BAD_CAST "url");
 	      /* open version pair */
-	      mf->vp = vpair_open (url);
+	      mf->vp = vpair_open (url, mf->bd);
 	      xmlSafeFree (url);
 	      if (mf->vp == NULL)
 		{
@@ -290,21 +297,30 @@ monfile_close (monfileptr mf)
 {
   if (mf == NULL)
     return;
-  xmlSafeFree (mf->filename);
+  if (mf->filename != NULL)
+    free (mf->filename);
+  if (mf->fullpath != NULL)
+    free (mf->fullpath);
   xmlSafeFree (mf->name);
   if (mf->reader != NULL)
     xmlFreeTextReader (mf->reader);
   xmlFree (mf);
 }
 
-xmlChar *
-monfile_get_filename (monfileptr mf)
+const char *
+monfile_get_filename (const monfileptr mf)
 {
   return mf->filename;
 }
 
-xmlChar *
-monfile_get_name (monfileptr mf)
+const xmlChar *
+monfile_get_name (const monfileptr mf)
 {
   return mf->name;
+}
+
+const basedirptr
+monfile_get_basedir (const monfileptr mf)
+{
+  return (mf == NULL ? NULL : mf->bd);
 }

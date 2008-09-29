@@ -1,20 +1,20 @@
 /* sha1.c - Functions to compute SHA1 message digest of files or
    memory blocks according to the NIST specification FIPS-180-1.
 
-   Copyright (C) 2000, 2001, 2003, 2004, 2005, 2006 Free Software
+   Copyright (C) 2000, 2001, 2003, 2004, 2005, 2006, 2008 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU Lesser General Public License as published by the
-   Free Software Foundation; either version 2.1, or (at your option) any
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation; either version 2, or (at your option) any
    later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
+   GNU General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public License
+   You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
@@ -23,16 +23,18 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include <config.h>
-
-#include "sha1.h"
-
 #include <stddef.h>
 #include <string.h>
+#include "sha1.h"
+#include "config.h"
 
-#if USE_UNLOCKED_IO
-# include "unlocked-io.h"
-#endif
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#else
+typedef unsigned int uint32_t;
+#endif /* HAVE_STDINT_H */
 
 #ifdef WORDS_BIGENDIAN
 # define SWAP(n) (n)
@@ -45,6 +47,20 @@
 #if BLOCKSIZE % 64 != 0
 # error "invalid BLOCKSIZE"
 #endif
+
+/* Structure to save state of computation between the single steps.  */
+struct sha1_ctx
+{
+  uint32_t A;
+  uint32_t B;
+  uint32_t C;
+  uint32_t D;
+  uint32_t E;
+
+  uint32_t total[2];
+  uint32_t buflen;
+  uint32_t buffer[32];
+};
 
 /* This array contains the bytes used to pad the buffer to the next
    64-byte boundary.  (RFC 1321, 3.1: Step 1)  */
@@ -67,28 +83,32 @@ sha1_init_ctx (struct sha1_ctx *ctx)
   ctx->buflen = 0;
 }
 
-/* Put result from CTX in first 20 bytes following RESBUF.  The result
-   must be in little endian byte order.
+/* Copy the 4 byte value from v into the memory location pointed to by *cp,
+   If your architecture allows unaligned access this is equivalent to
+   * (uint32_t *) cp = v  */
+static inline void
+set_uint32 (char *cp, uint32_t v)
+{
+  memcpy (cp, &v, sizeof v);
+}
 
-   IMPORTANT: On some systems it is required that RESBUF is correctly
-   aligned for a 32-bit value.  */
+/* Put result from CTX in first 20 bytes following RESBUF.  The result
+   must be in little endian byte order.  */
 void *
 sha1_read_ctx (const struct sha1_ctx *ctx, void *resbuf)
 {
-  ((uint32_t *) resbuf)[0] = SWAP (ctx->A);
-  ((uint32_t *) resbuf)[1] = SWAP (ctx->B);
-  ((uint32_t *) resbuf)[2] = SWAP (ctx->C);
-  ((uint32_t *) resbuf)[3] = SWAP (ctx->D);
-  ((uint32_t *) resbuf)[4] = SWAP (ctx->E);
+  char *r = resbuf;
+  set_uint32 (r + 0 * sizeof ctx->A, SWAP (ctx->A));
+  set_uint32 (r + 1 * sizeof ctx->B, SWAP (ctx->B));
+  set_uint32 (r + 2 * sizeof ctx->C, SWAP (ctx->C));
+  set_uint32 (r + 3 * sizeof ctx->D, SWAP (ctx->D));
+  set_uint32 (r + 4 * sizeof ctx->E, SWAP (ctx->E));
 
   return resbuf;
 }
 
 /* Process the remaining bytes in the internal buffer and the usual
-   prolog according to the standard and write the result to RESBUF.
-
-   IMPORTANT: On some systems it is required that RESBUF is correctly
-   aligned for a 32-bit value.  */
+   prolog according to the standard and write the result to RESBUF.  */
 void *
 sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf)
 {

@@ -35,8 +35,9 @@ int metafile_write (metafileptr mef);
 void metafile_close (metafileptr mef);
 
 /* monitor functions */
-int monitor_set_last_check (metafileptr mef, monitorptr m, time_t lastchk);
-time_t monitor_get_last_check (metafileptr mef, monitorptr m);
-time_t monitor_get_next_check (metafileptr mef, monitorptr m);
+int monitor_set_last_check (metafileptr mef, const monitorptr m,
+			    time_t lastchk);
+time_t monitor_get_last_check (const metafileptr mef, const monitorptr m);
+time_t monitor_get_next_check (const metafileptr mef, const monitorptr m);
 
 #endif /* __WC_METAFILE_H__ */

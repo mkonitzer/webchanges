@@ -16,7 +16,7 @@ gwebchanges_CPPFLAGS = $(WX_CPPFLAGS)
 gwebchanges_LDFLAGS = $(WX_LIBS)
 endif
 
-webchanges_SOURCES = main.c global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
+webchanges_SOURCES = main.c basedir.c basedir.h global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
 evalxpath_SOURCES = evalxpath.c
 
 monfile_dtd.inc: ../doc/wc1.dtd

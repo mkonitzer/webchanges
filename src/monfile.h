@@ -23,6 +23,7 @@
 
 #include "monitor.h"
 #include "vpair.h"
+#include "basedir.h"
 
 #define MONFILE_DTD_URL "http://webchanges.sourceforge.net/dtd/wc1.dtd"
 
@@ -30,11 +31,12 @@ typedef struct _monfile monfile;
 typedef monfile *monfileptr;
 
 /* monfile functions */
-monfileptr monfile_open (const char *filename);
-int monfile_get_next_vpair (monfileptr mf, vpairptr * vp);
-int monfile_get_next_monitor (monfileptr mf, monitorptr * mon);
+monfileptr monfile_open (const char *filename, const basedirptr bd);
+int monfile_get_next_vpair (const monfileptr mf, vpairptr * vp);
+int monfile_get_next_monitor (const monfileptr mf, monitorptr * mon);
 void monfile_close (monfileptr mf);
-xmlChar *monfile_get_filename (monfileptr mf);
-xmlChar *monfile_get_name (monfileptr mf);
+const char *monfile_get_filename (const monfileptr mf);
+const xmlChar *monfile_get_name (const monfileptr mf);
+const basedirptr monfile_get_basedir (const monfileptr mf);
 
 #endif /* __WC_MONFILE_H__ */
