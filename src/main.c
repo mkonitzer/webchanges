@@ -330,6 +330,18 @@ version (void)
   printf ("FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.\n");
 }
 
+static int
+errexit (const char *fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  vfprintf (stderr, fmt, args);
+  va_end (args);
+  fprintf (stderr, "\n");
+  usage (stderr);
+  return -1;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -372,12 +384,8 @@ main (int argc, char **argv)
 	  break;
 	case 'b':		/* base directory */
 	  if (userdir != NULL)
-	    {
-	      fprintf (stderr,
-		       "More than one base directory specified, exiting.\n");
-	      usage (stderr);
-	      return -1;
-	    }
+	    return
+	      errexit ("More than one base directory specified, exiting.");
 	  userdir = strdup (optarg);
 	  break;
 	case 'v':		/* verbose */
@@ -388,25 +396,20 @@ main (int argc, char **argv)
 	  break;
 	  /* errors */
 	case '?':
-	  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-	  usage (stderr);
-	  return -1;
+	  if (userdir != NULL)
+	    {
+	      free (userdir);
+	      userdir = NULL;
+	    }
+	  return errexit ("Unknown option '-%c'.", optopt);
 	}
     }
 
   /* do we have a unique command? */
   if (action == NONE)
-    {
-      fprintf (stderr, "No command given, exiting.\n");
-      usage (stderr);
-      return -1;
-    }
-  else if (action == TOOMANY)
-    {
-      fprintf (stderr, "More than one command given, exiting.\n");
-      usage (stderr);
-      return -1;
-    }
+    return errexit ("No command given, exiting.");
+  if (action == TOOMANY)
+    return errexit ("More than one command given, exiting.");
 
   /* Setup basedir */
   basedir = basedir_open (userdir);
@@ -416,27 +419,20 @@ main (int argc, char **argv)
       userdir = NULL;
     }
   if (basedir == NULL)
-    {
-      fprintf (stderr, "Could not determine base directory.\n");
-      usage (stderr);
-      return -1;
-    }
+    return errexit ("Could not determine base directory.");
   /* Monitor files must be passed on cmdline when using current directory. */
   if (basedir_is_curdir (basedir) && argc - optind == 0)
     {
-      fprintf (stderr, "No monitor file(s) given, exiting.\n");
-      usage (stderr);
       basedir_close (basedir);
-      return -1;
+      return errexit ("No monitor file(s) given, exiting.");
     }
   /* Prepare base directory if necessary. */
   if (basedir_is_prepared (basedir) == 0)
     {
       if (basedir_prepare (basedir) != RET_OK)
 	{
-	  outputf (INFO, "Could not prepare base directory, exiting.\n");
 	  basedir_close (basedir);
-	  return -1;
+	  return errexit ("Could not prepare base directory, exiting.");
 	}
     }
 
@@ -455,9 +451,8 @@ main (int argc, char **argv)
     basedir_get_all_monfiles (basedir, filelist);
   if (xmlListEmpty (filelist) != 0)
     {
-      fprintf (stderr, "No monitor files found, exiting.\n");
-      usage (stderr);
-      return -1;
+      basedir_close (basedir);
+      return errexit ("No monitor files found, exiting.");
     }
 
   /* Walk through all monitor files found. */
