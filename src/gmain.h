@@ -23,6 +23,7 @@
 
 #include <wx/wx.h>
 #include <wx/listctrl.h>
+#include <wx/treectrl.h>
 #include <wx/splitter.h>
 #include <wx/arrstr.h>
 
