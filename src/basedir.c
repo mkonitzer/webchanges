@@ -95,7 +95,7 @@ get_default_basedir (void)
 {
   char *basedir;
 #ifdef _WIN32
-  const char *appdatadir = NULL;
+  char *appdatadir = NULL;
   const char *profiledir = NULL;
 #else
   const char *homedir = NULL;
@@ -242,7 +242,11 @@ dir_safe_create (const char *dirname)
     {
       outputf (INFO, "[basedir] Directory '%s' does not exist, creating.\n",
 	       dirname);
+#ifndef _WIN32
       if (mkdir (dirname, 0755) != 0)
+#else
+      if (mkdir (dirname) != 0)
+#endif
 	{
 	  outputf (ERROR, "[basedir] Could not create directory '%s'.\n",
 		   dirname);
