@@ -20,6 +20,7 @@
 
 #include <libxml/HTMLparser.h>
 #include <libxml/xmlIO.h>
+#include <libxml/tree.h>
 #include <string.h>
 #include <errno.h>
 #include "global.h"

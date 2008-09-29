@@ -22,6 +22,7 @@
 #define __WC_VPAIR_H__
 
 #include <libxml/xmlstring.h>
+#include <libxml/tree.h>
 #include "basedir.h"
 
 typedef struct _vpair vpair;
