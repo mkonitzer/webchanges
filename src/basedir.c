@@ -179,7 +179,7 @@ basedir_open (const char *dirname)
 		       "[basedir] Default base directory '%s' does not exist, please create it first.\n",
 		       defaultbase);
 	      free (defaultbase);
-              defaultbase = NULL;
+	      defaultbase = NULL;
 	    }
 	  else
 	    outputf (WARN,
@@ -273,7 +273,7 @@ basedir_prepare (const basedirptr bd)
 char *
 basedir_buildpath_monfile (const basedirptr bd, const char *filename)
 {
-  if (bd->monfile_dir == NULL)
+  if (bd == NULL || bd->monfile_dir == NULL)
     return strdup (filename);
   return dir_join (bd->monfile_dir, filename);
 }
@@ -281,7 +281,7 @@ basedir_buildpath_monfile (const basedirptr bd, const char *filename)
 char *
 basedir_buildpath_metafile (const basedirptr bd, const char *filename)
 {
-  if (bd->metafile_dir == NULL)
+  if (bd == NULL || bd->metafile_dir == NULL)
     return strdup (filename);
   return dir_join (bd->metafile_dir, filename);
 }
@@ -289,7 +289,7 @@ basedir_buildpath_metafile (const basedirptr bd, const char *filename)
 char *
 basedir_buildpath_cache (const basedirptr bd, const char *filename)
 {
-  if (bd->cache_dir == NULL)
+  if (bd == NULL || bd->cache_dir == NULL)
     return strdup (filename);
   return dir_join (bd->cache_dir, filename);
 }
@@ -324,11 +324,12 @@ basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list)
 	{
 	  outputf (DEBUG, "[basedir] Adding monitor file '%s'.\n",
 		   entry->d_name);
-	  xmlListAppend (list, entry->d_name);
+	  xmlListPushBack (list, strdup (entry->d_name));
 	}
       else
 	outputf (DEBUG, "[basedir] Ignoring directory entry '%s'.\n",
 		 entry->d_name);
+      free (fullpath);
       entry = readdir (dir);
     }
   closedir (dir);

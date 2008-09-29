@@ -97,6 +97,16 @@ xml_errfunc (void *ctx, const char *msg, ...)
 #endif /* SHOW_HTML_ERRORS */
 }
 
+void
+xml_strlist_deallocator (xmlLinkPtr lk)
+{
+  if (lk == NULL)
+    return;
+  void *data = xmlLinkGetData (lk);
+  if (data != NULL)
+    free (data);
+}
+
 /*
  * print results, comparing @oldres to @curres
  */
@@ -305,7 +315,7 @@ usage (FILE * f)
   fprintf (f, "  -V  display version & copyright information and exit\n\n");
   fprintf (f, "Options:\n");
   fprintf (f, "  -f  force checking/updating of all monitors now\n");
-  fprintf (f, "  -b  set base directory (for monitor/metadata/cache files)\n");
+  fprintf (f, "  -b  set base directory\n");
   fprintf (f, "  -q  quiet mode, suppress most stdout messages\n");
   fprintf (f, "  -v  verbose mode, repeat to increase stdout messages\n");
 }
@@ -361,12 +371,13 @@ main (int argc, char **argv)
 	  force = 1;
 	  break;
 	case 'b':		/* base directory */
-          if (userdir != NULL)
-            {
-              fprintf (stderr, "More than one base directory specified, exiting.\n");
-              usage (stderr);
-              return -1;
-            }
+	  if (userdir != NULL)
+	    {
+	      fprintf (stderr,
+		       "More than one base directory specified, exiting.\n");
+	      usage (stderr);
+	      return -1;
+	    }
 	  userdir = strdup (optarg);
 	  break;
 	case 'v':		/* verbose */
@@ -431,13 +442,13 @@ main (int argc, char **argv)
 
   /* Build file list ... */
   xmlListPtr filelist;
-  filelist = xmlListCreate (NULL, NULL);
+  filelist = xmlListCreate (xml_strlist_deallocator, NULL);
   if (argc - optind > 0)
     {
       int i;
       /* ... either from the user-specified files on cmdline ... */
       for (i = optind; i < argc; i++)
-	xmlListAppend (filelist, strdup (argv[i]));
+	xmlListPushBack (filelist, strdup (argv[i]));
     }
   else
     /* ... or by taking all monitor files in basedir. */
@@ -459,7 +470,6 @@ main (int argc, char **argv)
       /* Get next monitor file from file list */
       lk = xmlListFront (filelist);
       filename = xmlLinkGetData (lk);
-      xmlListPopFront (filelist);
 
       /* Open monitor file. */
       mf = monfile_open (filename, basedir);
@@ -467,6 +477,7 @@ main (int argc, char **argv)
 	{
 	  /* Skip this monitor file. */
 	  outputf (ERROR, "Error reading monitor file %s\n\n", filename);
+	  xmlListPopFront (filelist);
 	  count = -1;
 	  continue;
 	}
@@ -490,7 +501,9 @@ main (int argc, char **argv)
       count = (ret < 0 || count < 0 ? -1 : count + ret);
       /* Ready to close monitor file. */
       monfile_close (mf);
+      xmlListPopFront (filelist);
     }
+  basedir_close (basedir);
   xmlListDelete (filelist);
   xmlCleanupParser ();
   return count;

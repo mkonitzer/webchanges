@@ -25,6 +25,7 @@
 #include "global.h"
 #include "vpair.h"
 #include "sha1.h"
+#include "basedir.h"
 
 
 struct _vpair
@@ -32,32 +33,30 @@ struct _vpair
   /* user-filled variables */
   xmlChar *url;
   /* state variables */
-  xmlChar *cache;
+  char *cache;
   xmlParserInputBufferPtr curbuf;
   xmlDocPtr curdoc;
   xmlDocPtr olddoc;
 };
 
-static xmlChar *
+static char *
 url_to_cache (const xmlChar * url)
 {
   int i;
   unsigned char hashval[20];
-  xmlChar *hash, *pos, *ret;
-  hash = pos = (xmlChar *) xmlMalloc (41);
+  char *hash, *pos;
+  hash = pos = malloc (2 * 20 + 5 + 1);
   sha1_buffer ((char *) url, strlen ((char *) url), hashval);
   for (i = 0; i < 20; i++)
     {
-      sprintf ((char *) pos, "%02x", hashval[i]);
+      sprintf (pos, "%02x", hashval[i]);
       pos += 2;
     }
-  ret = xmlStrncatNew (hash, BAD_CAST ".html", 5);
-  xmlSafeFree (hash);
-  return ret;
+  return strcat (hash, ".html");
 }
 
 vpairptr
-vpair_open (const xmlChar * url)
+vpair_open (const xmlChar * url, const basedirptr bd)
 {
   vpairptr vp;
   /* allocate vpair struct */
@@ -72,8 +71,10 @@ vpair_open (const xmlChar * url)
   vp->url = xmlStrdup (url);
   outputf (DEBUG, "[vpair] Using current document %s\n", vp->url);
   /* calculate cache filename */
-  vp->cache = url_to_cache (vp->url);
+  char *filename = url_to_cache (vp->url);
+  vp->cache = basedir_buildpath_cache (bd, filename);
   outputf (DEBUG, "[vpair] Using old document %s\n", vp->cache);
+  free (filename);
   return vp;
 }
 
@@ -83,9 +84,9 @@ read_into_buffer (const char *filename)
   int read;
   xmlParserInputBufferPtr buf;
   /* open document */
-  if ((buf = xmlParserInputBufferCreateFilename ((char *) filename,
-						 XML_CHAR_ENCODING_NONE))
-      == NULL)
+  if ((buf =
+       xmlParserInputBufferCreateFilename (filename,
+					   XML_CHAR_ENCODING_NONE)) == NULL)
     {
       outputf (WARN, "[vpair] Could not open %s\n", filename);
       return NULL;
@@ -106,7 +107,7 @@ vpair_parse (vpairptr vp)
 {
   /* read and parse old document (do not keep in memory) */
   outputf (INFO, "[vpair] Fetching cached document %s\n", vp->cache);
-  if ((vp->olddoc = htmlReadFile ((char *) vp->cache, NULL, 0)) == NULL)
+  if ((vp->olddoc = htmlReadFile (vp->cache, NULL, 0)) == NULL)
     {
       outputf (WARN, "[vpair] Could not parse %s\n", vp->cache);
       return RET_ERROR;
@@ -152,8 +153,7 @@ vpair_download (vpairptr vp)
 	}
     }
   /* open cache */
-  if ((output = xmlOutputBufferCreateFilename ((char *) vp->cache,
-					       NULL, 0)) == NULL)
+  if ((output = xmlOutputBufferCreateFilename (vp->cache, NULL, 0)) == NULL)
     {
       outputf (WARN, "[vpair] Could not open %s\n", vp->cache);
       return RET_ERROR;
@@ -177,7 +177,7 @@ vpair_download (vpairptr vp)
 int
 vpair_remove (vpairptr vp)
 {
-  if (remove ((char *) vp->cache) != 0)
+  if (remove (vp->cache) != 0)
     {
       outputf (WARN, "[vpair] Could not remove %s\n", vp->cache);
       return RET_ERROR;
@@ -208,7 +208,7 @@ vpair_get_url (const vpairptr vp)
   return vp->url;
 }
 
-const xmlChar *
+const char *
 vpair_get_cache (const vpairptr vp)
 {
   return vp->cache;
