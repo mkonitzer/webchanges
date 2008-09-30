@@ -23,10 +23,12 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stddef.h>
 #include <string.h>
 #include "sha1.h"
-#include "config.h"
 
 #if defined(HAVE_STDINT_H)
 #include <stdint.h>
@@ -86,7 +88,7 @@ sha1_init_ctx (struct sha1_ctx *ctx)
 /* Copy the 4 byte value from v into the memory location pointed to by *cp,
    If your architecture allows unaligned access this is equivalent to
    * (uint32_t *) cp = v  */
-static inline void
+static void
 set_uint32 (char *cp, uint32_t v)
 {
   memcpy (cp, &v, sizeof v);
