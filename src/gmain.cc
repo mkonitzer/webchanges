@@ -18,15 +18,11 @@
    along with webchanges; if not, write to the Free Software Foundation,
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
-#include <libxml/tree.h>
+//#include <libxml/tree.h>
 #include <wx/wx.h>
-#include <wx/wxchar.h>
 #include <wx/treectrl.h>
-#include <wx/listctrl.h>
 #include <wx/splitter.h>
-#include <wx/string.h>
-#include <time.h>
-#include <errno.h>
+#include <wx/cmdline.h>
 #include "monfile.h"
 #include "metafile.h"
 #include "monitor.h"
@@ -36,6 +32,15 @@
 #include "gmain32.xpm"
 #include "gmain48.xpm"
 #include "config.h"
+
+/*
+ * Translate wxString into (char*) for use in system calls.
+ */
+#if defined(__WXMAC__)
+#define OSFILENAME(X) ((char *) (const char *)(X).fn_str())
+#else
+#define OSFILENAME(X) ((char *) (const char *)(X).mb_str())
+#endif
 
 enum {
     LIST_ABOUT = wxID_ABOUT,
@@ -54,10 +59,8 @@ IMPLEMENT_APP(WcApp)
 
 int lvl_verbos = NOTICE;	/* level for stdout-verbosity */
 int lvl_indent = 0;		/* level for indentation */
-int force = 0;			/* force checking */
+bool force = false;		/* force checking */
 
-enum action
-{ NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY };
 
 /*
  * callback output-function
@@ -121,6 +124,16 @@ xml_errfunc (void *ctx, const char *msg, ...)
   logCtrl->InsertItem(*item);
   va_end (args);
 #endif /* SHOW_HTML_ERRORS */
+}
+
+static void
+xml_strlist_deallocator (xmlLinkPtr lk)
+{
+  if (lk == NULL)
+    return;
+  void *data = xmlLinkGetData (lk);
+  if (data != NULL)
+    free (data);
 }
 
 /*
@@ -270,28 +283,48 @@ void WcFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	_("About gwebchanges"), wxOK | wxICON_INFORMATION);
 }
 
-void WcFrame::doCheck()
+int
+WcFrame::doInit(monfileptr mf)
 {
-    int update=0;
-    monitorptr m;
-    metafileptr mef;
-    xmlChar *mfname;
-    int ret, count = 0;
-    vpairptr lastvp = NULL;
-    monfileptr mf;
-    /* open monitor file @mf */
-    mf = monfile_open ("test.xml");
-    mfname = monfile_get_name (mf);
-    /* read monitor file @mf */
-    outputf (NOTICE, "Monitor File %s\n", mfname);
-    indent (NOTICE);
-    /* read metadata file @mef */
-    mef = metafile_open (mf);
-    metafile_read (mef);
-    while ((ret = monfile_get_next_monitor (mf, &m)) != RET_ERROR)
+  int ret;
+  vpairptr vp;
+  /* read monitor file @mf */
+  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (NOTICE);
+  while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
+    {
+      if (ret == RET_ERROR)
+	break;
+      outputf (NOTICE, "Downloading %s\n", vpair_get_url (vp));
+      indent (NOTICE);
+      outputf (NOTICE, "=> %s\n", vpair_get_cache (vp));
+      vpair_download (vp);
+      outdent (NOTICE);
+      vpair_close (vp);
+    }
+  outdent (NOTICE);
+  return (ret != RET_ERROR ? RET_OK : RET_ERROR);
+}
+
+int
+WcFrame::doCheck(monfileptr mf, int update)
+{
+  monitorptr m;
+  metafileptr mef;
+  const xmlChar *mfname;
+  int ret, count = 0;
+  vpairptr lastvp = NULL;
+  /* read monitor file @mf */
+  mfname = monfile_get_name (mf);
+  outputf (NOTICE, "Monitor File %s\n", mfname);
+  indent (NOTICE);
+  /* read metadata file @mef */
+  mef = metafile_open (mf);
+  metafile_read (mef);
+  while ((ret = monfile_get_next_monitor (mf, &m)) != RET_ERROR)
     {
       time_t nextchk;
-      xmlChar *name;
+      const xmlChar *name;
       if (ret == RET_EOF)
 	break;
       /* we obtained a monitor @m */
@@ -347,29 +380,261 @@ void WcFrame::doCheck()
 		 ctime (&nextchk));
       monitor_free (m);
     }
-    /* close metadata file @mef */
-    if (ret != RET_ERROR)
+  /* close metadata file @mef */
+  if (ret != RET_ERROR)
     metafile_write (mef);
-    metafile_close (mef);
-    outdent (NOTICE);
+  metafile_close (mef);
+  outdent (NOTICE);
+  return (ret != RET_ERROR ? count : RET_ERROR);
 }
 
+int
+WcFrame::doRemove(monfileptr mf)
+{
+  int ret;
+  vpairptr vp;
+  /* read monitor file @mf */
+  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (NOTICE);
+  while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
+    {
+      if (ret == RET_ERROR)
+	break;
+      outputf (NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
+      indent (NOTICE);
+      vpair_remove (vp);
+      outdent (NOTICE);
+      vpair_close (vp);
+    }
+  outdent (NOTICE);
+  return (ret != RET_ERROR ? RET_OK : RET_ERROR);
+}
 
 /*
  * WcApp - gwebchanges application
  */
-bool WcApp::OnInit()
+WcApp::WcApp ()
 {
-    WcFrame *frame = new WcFrame(wxT("gwebchanges"));
+  action = NONE;
+  userdir = NULL;
+  filelist = xmlListCreate (xml_strlist_deallocator, NULL);
+}
 
-    // register error function
-    xmlSetGenericErrorFunc (NULL, xml_errfunc);    
+const wxChar*
+WcApp::usage (void)
+{
+  return wxT ("Usage: webchanges COMMAND [OPTION]... FILE...\n\n" \
+  "Commands:\n" \
+  "  -i  initialize monitor file, download into cache\n" \
+  "  -c  check monitor file for changes\n" \
+  "  -u  check monitor file for changes and update cache\n" \
+  "  -r  remove files associated with monitor file from cache\n" \
+  "  -h  display this help and exit\n" \
+  "  -V  display version & copyright information and exit\n\n" \
+  "Options:\n" \
+  "  -f  force checking/updating of all monitors now\n" \
+  "  -b  set base directory\n" \
+  "  -q  quiet mode, suppress most stdout messages\n" \
+  "  -v  verbose mode, repeat to increase stdout messages");
+}
 
-    // perform the specified action
-    frame->doCheck();
+const wxChar*
+WcApp::version (void)
+{
+  return wxT ("webchanges version %s\n" VERSION \
+  "Copyright (C) 2006, 2007 Marius Konitzer\n" \
+  "This is free software; see the source for copying conditions.  " \
+  "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS " \
+  "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
+}
 
-    frame->Show(true);
-    SetTopWindow(frame);
+bool
+WcApp::errexit (const wxChar *fmt, ...)
+{
+  wxString errmsg;
+  va_list args;
+  va_start (args, fmt);
+  errmsg = wxString::FormatV (fmt, args) + _("\n") + usage ();
+  va_end (args);
+  wxMessageBox(errmsg, _("Error"), wxICON_ERROR);
+  return false;
+}
 
-    return true;
+void
+WcApp::OnInitCmdLine (wxCmdLineParser &parser)
+{
+  wxApp::OnInitCmdLine (parser);
+  static const wxCmdLineEntryDesc cmdLineDesc[] =
+  {
+    { wxCMD_LINE_SWITCH, _ ("i"), NULL, NULL },
+    { wxCMD_LINE_SWITCH, _ ("c"), NULL, NULL },
+    { wxCMD_LINE_SWITCH, _ ("u"), NULL, NULL },
+    { wxCMD_LINE_SWITCH, _ ("r"), NULL, NULL },
+    { wxCMD_LINE_SWITCH, _ ("h"), NULL, NULL, wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+    { wxCMD_LINE_SWITCH, _ ("V"), NULL, NULL },
+
+    { wxCMD_LINE_SWITCH, _ ("f"), NULL, NULL },
+    { wxCMD_LINE_OPTION, _ ("b"), NULL, NULL },
+    { wxCMD_LINE_SWITCH, _ ("v"), NULL, NULL, wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
+    { wxCMD_LINE_SWITCH, _ ("q"), NULL, NULL },
+
+    { wxCMD_LINE_PARAM, NULL, NULL, NULL, wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE },
+
+    { wxCMD_LINE_NONE }
+  };
+  parser.SetDesc (cmdLineDesc);
+  parser.SetSwitchChars (_ ("-"));
+  parser.DisableLongOptions ();
+}
+
+bool
+WcApp::OnCmdLineError(wxCmdLineParser& parser)
+{
+  wxMessageBox(usage (), _("Usage"), wxICON_ERROR);
+  return false;
+}
+
+bool
+WcApp::OnCmdLineHelp(wxCmdLineParser& parser)
+{
+  wxMessageBox(usage (), _("Usage"), wxICON_INFORMATION);
+  return false;
+}
+
+bool
+WcApp::OnCmdLineParsed(wxCmdLineParser& parser)
+{
+  /* Actions */
+  if (parser.Found (_ ("i")))
+    action = (action == NONE ? INIT : TOOMANY);
+  if (parser.Found (_ ("c")))
+    action = (action == NONE ? CHECK : TOOMANY);
+  if (parser.Found (_ ("u")))
+    action = (action == NONE ? UPDATE : TOOMANY);
+  if (parser.Found (_ ("r")))
+    action = (action == NONE ? REMOVE : TOOMANY);
+  if (parser.Found (_ ("V")))
+    {
+      wxMessageBox(version (), _("Version info"), wxICON_INFORMATION);
+      return false;
+    }
+  /* Options */
+  if (parser.Found (_ ("f")))
+    force = true;
+  wxString wxstr;
+  if (parser.Found (_ ("b"), &wxstr))
+    userdir = strdup (wxstr.fn_str());
+  if (parser.Found (_ ("v")))
+    lvl_verbos++;
+  if (parser.Found (_ ("q")))
+    lvl_verbos = WARN;
+  /* Parameters */
+  for (int i = 0; i < parser.GetParamCount(); ++i)
+    xmlListPushBack (filelist, strdup (OSFILENAME (parser.GetParam (i))));
+  return true;
+}
+
+bool
+WcApp::OnInit ()
+{
+  int count = 0;
+  basedirptr basedir = NULL;
+  wxMessageOutput::Set (new wxMessageOutputMessageBox);
+
+  /* Prepare main frame. */
+  WcFrame *frame = new WcFrame (wxT ("gwebchanges"));
+
+  /* Register error function. */
+  xmlSetGenericErrorFunc (NULL, xml_errfunc);
+
+  /* Parse command line. */
+  if (!wxApp::OnInit())
+    return false;
+
+  /* Do we have a unique command? */
+  if (action == NONE)
+    return errexit (_("No command given, exiting."));
+  if (action == TOOMANY)
+    return errexit (_("More than one command given, exiting."));
+
+  /* Setup basedir. */
+  basedir = basedir_open (userdir);
+  if (basedir == NULL)
+    return errexit (_("Could not determine base directory."));
+  /* Monitor files must be passed on cmdline when using current directory. */
+  if (basedir_is_curdir (basedir) != 0 && xmlListEmpty (filelist) != 0)
+    {
+      basedir_close (basedir);
+      return errexit (_("No monitor file(s) given, exiting."));
+    }
+  /* Prepare base directory if necessary. */
+  if (basedir_is_prepared (basedir) == 0)
+    {
+      if (basedir_prepare (basedir) != RET_OK)
+	{
+	  basedir_close (basedir);
+	  return errexit (_("Could not prepare base directory, exiting."));
+	}
+    }
+
+  /* Build file list by taking all monitor files in basedir. */
+  if (xmlListEmpty (filelist) != 0)
+    basedir_get_all_monfiles (basedir, filelist);
+  if (xmlListEmpty (filelist) != 0)
+    {
+      basedir_close (basedir);
+      return errexit (_("No monitor files found, exiting."));
+    }
+
+  /* Walk through all monitor files found. */
+  while (xmlListEmpty (filelist) == 0)
+    {
+      int ret = 0;
+      monfileptr mf;
+      xmlLinkPtr lk;
+      const char *filename;
+      /* Get next monitor file from file list */
+      lk = xmlListFront (filelist);
+      filename = (const char*) xmlLinkGetData (lk);
+
+      /* Open monitor file. */
+      mf = monfile_open (filename, basedir);
+      if (mf == NULL)
+	{
+	  /* Skip this monitor file. */
+	  outputf (ERROR, "Error reading monitor file %s\n\n", filename);
+	  xmlListPopFront (filelist);
+	  count = -1;
+	  continue;
+	}
+      /* Process monitor file. */
+      outputf (INFO, "Processing monitor file %s\n", filename);
+      switch (action)
+	{
+	case INIT:
+	  ret = frame->doInit (mf);
+	  break;
+	case CHECK:
+	  ret = frame->doCheck (mf, 0);
+	  break;
+	case UPDATE:
+	  ret = frame->doCheck (mf, 1);
+	  break;
+	case REMOVE:
+	  ret = frame->doRemove (mf);
+	  break;
+	}
+      count = (ret < 0 || count < 0 ? -1 : count + ret);
+      /* Ready to close monitor file. */
+      monfile_close (mf);
+      xmlListPopFront (filelist);
+    }
+  basedir_close (basedir);
+  xmlListDelete (filelist);
+  xmlCleanupParser ();
+
+  frame->Show (true);
+  SetTopWindow (frame);
+
+  return true;
 }

@@ -22,10 +22,10 @@
 #define __WC_GMAIN_H__
 
 #include <wx/wx.h>
-#include <wx/listctrl.h>
+//#include <wx/listctrl.h>
 #include <wx/treectrl.h>
 #include <wx/splitter.h>
-#include <wx/arrstr.h>
+//#include <wx/arrstr.h>
 
 /*
  * WcTreeItemData - associate tree item with its underlying monitor
@@ -61,7 +61,9 @@ class WcFrame : public wxFrame
 public:
     WcFrame(const wxChar *title);
     virtual ~WcFrame();
-    void doCheck();
+    int doInit(monfileptr mf);
+    int doCheck(monfileptr mf, int update);
+    int doRemove(monfileptr mf);
 
 protected:
     void OnQuit(wxCommandEvent& event);
@@ -82,11 +84,23 @@ private:
 class WcApp : public wxApp
 {
 public:
-    WcApp() { }
+    WcApp();
+    virtual void OnInitCmdLine(wxCmdLineParser &parser);
+    virtual bool OnCmdLineError(wxCmdLineParser& parser);
+    virtual bool OnCmdLineHelp(wxCmdLineParser& parser);
+    virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
     virtual bool OnInit();
 
 private:
+  enum action { NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY };
+  const char * userdir;
+  xmlListPtr filelist;
+
     DECLARE_NO_COPY_CLASS(WcApp)
+    const wxChar* usage (void);
+    const wxChar* version (void);
+    bool errexit (const wxChar *fmt, ...);
+    int action;
 };
 
 #endif /* __WC_GMAIN_H__ */
