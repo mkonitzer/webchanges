@@ -9,7 +9,7 @@ MAINTAINERCLEANFILES = monfile_dtd.inc
 
 if COMPILE_GUI
 bin_PROGRAMS += gwebchanges 
-gwebchanges_SOURCES = gmain.cc global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
+gwebchanges_SOURCES = gmain.cc basedir.c basedir.h global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
 gwebchanges_CFLAGS = -x c++ $(WX_CFLAGS_ONLY)
 gwebchanges_CXXFLAGS = $(WX_CXXFLAGS_ONLY)
 gwebchanges_CPPFLAGS = $(WX_CPPFLAGS)
