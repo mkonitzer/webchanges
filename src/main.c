@@ -100,9 +100,10 @@ xml_errfunc (void *ctx, const char *msg, ...)
 static void
 xml_strlist_deallocator (xmlLinkPtr lk)
 {
+  void *data = NULL;
   if (lk == NULL)
     return;
-  void *data = xmlLinkGetData (lk);
+  data = xmlLinkGetData (lk);
   if (data != NULL)
     free (data);
 }
@@ -349,6 +350,7 @@ main (int argc, char **argv)
   int action = NONE;
   basedirptr basedir = NULL;
   char *userdir = NULL;
+  xmlListPtr filelist = NULL;
 
   /* register error function */
   xmlSetGenericErrorFunc (NULL, xml_errfunc);
@@ -437,7 +439,6 @@ main (int argc, char **argv)
     }
 
   /* Build file list ... */
-  xmlListPtr filelist;
   filelist = xmlListCreate (xml_strlist_deallocator, NULL);
   if (argc - optind > 0)
     {

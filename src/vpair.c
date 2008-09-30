@@ -59,6 +59,7 @@ url_to_cache (const xmlChar * url)
 vpairptr
 vpair_open (const xmlChar * url, const basedirptr bd)
 {
+  char *filename = NULL;
   vpairptr vp;
   /* allocate vpair struct */
   vp = (vpairptr) xmlMalloc (sizeof (vpair));
@@ -72,7 +73,7 @@ vpair_open (const xmlChar * url, const basedirptr bd)
   vp->url = xmlStrdup (url);
   outputf (DEBUG, "[vpair] Using current document %s\n", vp->url);
   /* calculate cache filename */
-  char *filename = url_to_cache (vp->url);
+  filename = url_to_cache (vp->url);
   vp->cache = basedir_buildpath_cache (bd, filename);
   outputf (DEBUG, "[vpair] Using old document %s\n", vp->cache);
   free (filename);

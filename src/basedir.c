@@ -47,9 +47,10 @@ struct _basedir
 static char *
 dir_join (const char *cur, const char *add)
 {
+  char *joined = NULL;
   if (cur == NULL || add == NULL)
     return NULL;
-  char *joined = (char*) malloc (strlen (cur) + 1 + strlen (add) + 1);
+  joined = (char*) malloc (strlen (cur) + 1 + strlen (add) + 1);
   strcpy (joined, cur);
 #ifdef _WIN32
   strcat (joined, "\\");

@@ -65,6 +65,8 @@ monfile_to_metafile (const char *filename)
 metafileptr
 metafile_open (const monfileptr mf)
 {
+  char *filename = NULL;
+  basedirptr bd = NULL;
   metafileptr mef;
   /* allocate metafile struct */
   mef = (metafileptr) xmlMalloc (sizeof (metafile));
@@ -77,8 +79,8 @@ metafile_open (const monfileptr mf)
   memset (mef, 0, sizeof (metafile));
   mef->mf = mf;
   /* calculate meta filename */
-  const basedirptr bd = monfile_get_basedir (mf);
-  char *filename = monfile_to_metafile (monfile_get_filename (mf));
+  bd = monfile_get_basedir (mf);
+  filename = monfile_to_metafile (monfile_get_filename (mf));
   mef->filename = basedir_buildpath_metafile (bd, filename);
   free (filename);
   outputf (DEBUG, "[metafile] Using metadata file %s\n", mef->filename);
