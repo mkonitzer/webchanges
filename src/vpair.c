@@ -46,7 +46,7 @@ url_to_cache (const xmlChar * url)
   int i;
   unsigned char hashval[20];
   char *hash, *pos;
-  hash = pos = malloc (2 * 20 + 5 + 1);
+  hash = pos = (char*) malloc (2 * 20 + 5 + 1);
   sha1_buffer ((char *) url, strlen ((char *) url), hashval);
   for (i = 0; i < 20; i++)
     {

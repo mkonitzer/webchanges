@@ -97,7 +97,7 @@ xml_errfunc (void *ctx, const char *msg, ...)
 #endif /* SHOW_HTML_ERRORS */
 }
 
-void
+static void
 xml_strlist_deallocator (xmlLinkPtr lk)
 {
   if (lk == NULL)
@@ -464,7 +464,7 @@ main (int argc, char **argv)
       const char *filename;
       /* Get next monitor file from file list */
       lk = xmlListFront (filelist);
-      filename = xmlLinkGetData (lk);
+      filename = (const char*) xmlLinkGetData (lk);
 
       /* Open monitor file. */
       mf = monfile_open (filename, basedir);

@@ -97,7 +97,7 @@ set_uint32 (char *cp, uint32_t v)
 void *
 sha1_read_ctx (const struct sha1_ctx *ctx, void *resbuf)
 {
-  char *r = resbuf;
+  char *r = (char*) resbuf;
   set_uint32 (r + 0 * sizeof ctx->A, SWAP (ctx->A));
   set_uint32 (r + 1 * sizeof ctx->B, SWAP (ctx->B));
   set_uint32 (r + 2 * sizeof ctx->C, SWAP (ctx->C));

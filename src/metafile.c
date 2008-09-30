@@ -50,13 +50,13 @@ monfile_to_metafile (const char *filename)
   int len = strlen (filename);
   if (strncasecmp (filename + len - 4, ".xml", 4) == 0)
     {
-      ret = malloc (len + 2);
+      ret = (char*) malloc (len + 2);
       strncpy (ret, filename, len - 4);
       ret[len - 4] = '\0';
     }
   else
     {
-      ret = malloc (len + 6);
+      ret = (char*) malloc (len + 6);
       strcpy (ret, filename);
     }
   return strcat (ret, ".meta");

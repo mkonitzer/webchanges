@@ -49,7 +49,7 @@ dir_join (const char *cur, const char *add)
 {
   if (cur == NULL || add == NULL)
     return NULL;
-  char *joined = malloc (strlen (cur) + 1 + strlen (add) + 1);
+  char *joined = (char*) malloc (strlen (cur) + 1 + strlen (add) + 1);
   strcpy (joined, cur);
 #ifdef _WIN32
   strcat (joined, "\\");
