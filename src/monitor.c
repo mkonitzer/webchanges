@@ -179,6 +179,8 @@ results_equal (const xmlXPathObjectPtr obj1, const xmlXPathObjectPtr obj2)
     {
     case XPATH_NODESET:
       /* results must be non-NULL */
+      if (obj1->nodesetval == obj2->nodesetval)
+	return 0;
       if (obj1->nodesetval == NULL || obj2->nodesetval == NULL)
 	return RET_ERROR;
       if (obj1->nodesetval->nodeNr != obj2->nodesetval->nodeNr)

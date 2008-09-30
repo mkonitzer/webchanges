@@ -160,10 +160,10 @@ print_results (int l, xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres)
       outputf (l, "current number: %.2lf\n", curres->floatval);
       break;
     case XPATH_BOOLEAN:
-      outputf (l, "    old boolean: %.2lf\n",
-	       (oldres->boolval == 0 ? "FALSE" : "TRUE"));
-      outputf (l, "current boolean: %.2lf\n",
-	       (curres->boolval == 0 ? "FALSE" : "TRUE"));
+      outputf (l, "    old boolean: %s\n",
+	       oldres->boolval == 0 ? "FALSE" : "TRUE");
+      outputf (l, "current boolean: %s\n",
+	       curres->boolval == 0 ? "FALSE" : "TRUE");
     default:
       break;
     }
