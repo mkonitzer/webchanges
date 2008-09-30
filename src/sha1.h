@@ -20,7 +20,7 @@
 #ifndef __WC_SHA1_H__
 #define __WC_SHA1_H__
 
-# include <stdio.h>
+#include <stdio.h>
 
 #define SHA1_DIGEST_SIZE 20
 

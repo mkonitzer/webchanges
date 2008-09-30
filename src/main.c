@@ -17,6 +17,9 @@
    along with webchanges; if not, write to the Free Software Foundation,
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
 #include <libxml/list.h>
@@ -28,7 +31,6 @@
 #include "monitor.h"
 #include "basedir.h"
 #include "global.h"
-#include "config.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -38,9 +40,9 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 #endif /* ! HAVE_GETOPT_H */
 
-int lvl_verbos = NOTICE;	/* level for stdout-verbosity */
-int lvl_indent = 0;		/* level for indentation */
-int force = 0;			/* force checking */
+static int lvl_verbos = NOTICE;	/* level for stdout-verbosity */
+static int lvl_indent = 0;	/* level for indentation */
+static int force = 0;		/* force checking */
 
 enum action
 { NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY };
@@ -423,7 +425,7 @@ main (int argc, char **argv)
   if (basedir == NULL)
     return errexit ("Could not determine base directory.");
   /* Monitor files must be passed on cmdline when using current directory. */
-  if (basedir_is_curdir (basedir) && argc - optind == 0)
+  if (basedir_is_curdir (basedir) != 0 && argc - optind == 0)
     {
       basedir_close (basedir);
       return errexit ("No monitor file(s) given, exiting.");
@@ -465,7 +467,7 @@ main (int argc, char **argv)
       const char *filename;
       /* Get next monitor file from file list */
       lk = xmlListFront (filelist);
-      filename = (const char*) xmlLinkGetData (lk);
+      filename = (const char *) xmlLinkGetData (lk);
 
       /* Open monitor file. */
       mf = monfile_open (filename, basedir);
