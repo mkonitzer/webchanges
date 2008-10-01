@@ -94,18 +94,18 @@ outputf (int l, const char *fmt, ...)
 
   va_start (args, fmt);
   vsnprintf ((char*) & str, 1023, fmt, args);
-  wxListItem *item = new wxListItem ();
-  item->SetId (logCtrl->GetItemCount ());
-  item->SetText (wxString (str, wxConvUTF8));
+  wxListItem item;
+  item.SetId (logCtrl->GetItemCount ());
+  item.SetText (wxString (str, wxConvUTF8));
   switch (l)
     {
     case WARN:
-      item->SetBackgroundColour (wxColour (255, 255, 120));
+      item.SetBackgroundColour (wxColour (255, 255, 120));
       break;
     case ERROR:
-      item->SetBackgroundColour (wxColour (255, 120, 120));
+      item.SetBackgroundColour (wxColour (255, 120, 120));
     }
-  logCtrl->InsertItem (*item);
+  logCtrl->InsertItem (item);
   va_end (args);
 }
 
@@ -312,9 +312,9 @@ WcResultGrid::OnSize (wxSizeEvent& event)
 WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id, wxPoint (-1, -1), wxSize (200, 100), wxLC_REPORT | wxLC_NO_HEADER | wxLC_SINGLE_SEL | wxSUNKEN_BORDER)
 {
   // Use typewriter/teletype font
-  wxFont *ttFont = new wxFont (wxNORMAL_FONT->GetPointSize (),
-                               wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-  SetFont (*ttFont);
+  wxFont ttFont (wxNORMAL_FONT->GetPointSize (), wxFONTFAMILY_TELETYPE,
+          wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  SetFont (ttFont);
   // Create single column
   wxListItem itemCol;
   itemCol.SetText (_T (""));
@@ -564,6 +564,24 @@ WcApp::WcApp ()
   filelist = xmlListCreate (xml_strlist_deallocator, NULL);
 }
 
+WcApp::~WcApp ()
+{
+  if (filelist != NULL)
+    {
+      xmlListDelete (filelist);
+      filelist = NULL;
+    }
+  if (basedir != NULL)
+    {
+      basedir_close (basedir);
+      basedir = NULL;
+    }
+  if (userdir != NULL)
+    {
+      free (userdir);
+      userdir = NULL;
+    }
+}
 const wxChar*
 WcApp::usage (void)
 {
@@ -774,7 +792,9 @@ WcApp::OnInit ()
       xmlListPopFront (filelist);
     }
   basedir_close (basedir);
+  basedir = NULL;
   xmlListDelete (filelist);
+  filelist = NULL;
   xmlCleanupParser ();
 
   /* Exit if nothing has happened. */

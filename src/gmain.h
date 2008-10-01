@@ -105,6 +105,7 @@ class WcApp : public wxApp
 {
 public:
   WcApp ();
+  ~WcApp ();
   virtual void OnInitCmdLine (wxCmdLineParser &parser);
   virtual bool OnCmdLineError (wxCmdLineParser& parser);
   virtual bool OnCmdLineHelp (wxCmdLineParser& parser);
@@ -118,7 +119,7 @@ private:
     NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY
   };
   int action;
-  const char * userdir;
+  char * userdir;
   basedirptr basedir;
   xmlListPtr filelist;
 
