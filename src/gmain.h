@@ -24,6 +24,7 @@
 #include <wx/wx.h>
 #include <wx/treectrl.h>
 #include <wx/splitter.h>
+#include <wx/grid.h>
 #include <libxml/xpath.h>
 #include <libxml/list.h>
 #include "monfile.h"
@@ -35,24 +36,45 @@
 class WcTreeItemData : public wxTreeItemData
 {
 public:
-  WcTreeItemData (wxString name, wxString mf, wxString lastchk, wxString url);
-  wxString GetName () { return name; }
-  wxString GetMonFile () { return monfile; }
-  wxString GetLastCheck () { return lastchk; }
-  wxString GetURL () { return url; }
-  void SetResult (bool oldres, bool curres);
-  void SetResult (double oldres, double curres);
-  void SetResult (xmlChar *oldres, xmlChar *curres);
-  void SetResult (xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres);
-
+  WcTreeItemData (const monitorptr m, const metafileptr mef);
+  const wxString& GetName () const { return name; }
+  const wxString& GetLastCheck () const { return lastchk; }
+  const wxArrayString& GetOldArray () const { return old; }
+  const wxArrayString& GetCurArray () const { return cur; }
 private:
   wxString name;
-  wxString monfile;
   wxString lastchk;
-  wxString url;
+  wxArrayString old;
+  wxArrayString cur;
+};
 
-  wxArrayString oldres;
-  wxArrayString curres;
+class WcTreeCtrl : public wxTreeCtrl
+{
+public:
+    WcTreeCtrl (wxWindow* parent, wxWindowID id);
+    wxTreeItemId AppendMonfile (const monfileptr mf);
+    wxTreeItemId AppendMonitor (const wxTreeItemId& parent, const monitorptr m, const metafileptr mef);
+private:
+  void OnSelChanged(wxTreeEvent &event);
+  DECLARE_EVENT_TABLE ()
+};
+
+class WcResultGrid : public wxGrid
+{
+public:
+  WcResultGrid (wxWindow* parent, wxWindowID id);
+private:
+  void OnSize(wxSizeEvent& event);
+  DECLARE_EVENT_TABLE ()
+};
+
+class WcLogCtrl : public wxListCtrl
+{
+public:
+  WcLogCtrl (wxWindow* parent, wxWindowID id);
+private:
+  void OnSize(wxSizeEvent& event);
+  DECLARE_EVENT_TABLE ()
 };
 
 /*
@@ -65,14 +87,11 @@ public:
   int doInit (monfileptr mf);
   int doCheck (monfileptr mf, int update);
   int doRemove (monfileptr mf);
+  void finalize (int count);
 
 protected:
   void OnQuit (wxCommandEvent& event);
   void OnAbout (wxCommandEvent& event);
-
-  wxTreeCtrl *treeCtrl;
-  wxTextCtrl *resCtrl;
-  wxListCtrl *logCtrl;
 
 private:
   DECLARE_NO_COPY_CLASS (WcFrame)

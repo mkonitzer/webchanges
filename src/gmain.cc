@@ -22,6 +22,7 @@
 #include <wx/treectrl.h>
 #include <wx/splitter.h>
 #include <wx/cmdline.h>
+#include <wx/grid.h>
 #include <libxml/xpath.h>
 #include <libxml/list.h>
 #include "monfile.h"
@@ -46,15 +47,30 @@
 
 enum
 {
-  LIST_ABOUT = wxID_ABOUT,
-  LIST_QUIT = wxID_EXIT
+  ID_LIST_ABOUT = wxID_ABOUT,
+  ID_LIST_QUIT = wxID_EXIT,
+  ID_TREECTRL
 };
 
-wxListCtrl *logCtrl = NULL;
+WcLogCtrl *logCtrl = NULL;
+WcResultGrid *resGrid = NULL;
+WcTreeCtrl *treeCtrl = NULL;
+
+BEGIN_EVENT_TABLE(WcTreeCtrl, wxTreeCtrl)
+EVT_TREE_SEL_CHANGED(ID_TREECTRL, WcTreeCtrl::OnSelChanged)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE (WcResultGrid, wxGrid)
+EVT_SIZE (WcResultGrid::OnSize)
+END_EVENT_TABLE ()
+
+BEGIN_EVENT_TABLE (WcLogCtrl, wxListCtrl)
+EVT_SIZE (WcLogCtrl::OnSize)
+END_EVENT_TABLE ()
 
 BEGIN_EVENT_TABLE (WcFrame, wxFrame)
-EVT_MENU (LIST_QUIT, WcFrame::OnQuit)
-EVT_MENU (LIST_ABOUT, WcFrame::OnAbout)
+EVT_MENU (ID_LIST_QUIT, WcFrame::OnQuit)
+EVT_MENU (ID_LIST_ABOUT, WcFrame::OnAbout)
 END_EVENT_TABLE ()
 
 IMPLEMENT_APP (WcApp)
@@ -80,7 +96,7 @@ outputf (int l, const char *fmt, ...)
   vsnprintf ((char*) & str, 1023, fmt, args);
   wxListItem *item = new wxListItem ();
   item->SetId (logCtrl->GetItemCount ());
-  item->SetText (wxString (str, wxConvUTF8).c_str ());
+  item->SetText (wxString (str, wxConvUTF8));
   switch (l)
     {
     case WARN:
@@ -143,66 +159,177 @@ xml_strlist_deallocator (xmlLinkPtr lk)
 }
 
 /*
- * print results, comparing @oldres to @curres
+ * WcTreeItemData - associate tree item with its underlying monitor
  */
-void
-print_results (WcTreeItemData *wcid, xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres)
+WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
 {
-  int i, j;
+  name = wxString ((char*) monitor_get_name(m), wxConvUTF8);
+  lastchk = wxDateTime (monitor_get_last_check(mef, m)).Format ();
+
   /* results comparable? */
+  xmlXPathObjectPtr oldres = monitor_get_old_result(m);
+  xmlXPathObjectPtr curres = monitor_get_cur_result(m);
   if (oldres->type != curres->type)
     return;
+  old.Clear ();
+  cur.Clear ();
   switch (oldres->type)
     {
     case XPATH_NODESET:
-      wcid->SetResult (oldres->nodesetval, curres->nodesetval);
+      for (int i = 0; i < 2; ++i)
+	{
+	  const xmlNodeSetPtr nodes = (i == 0 ? oldres : curres)->nodesetval;
+	  wxArrayString& strings = (i == 0 ? old : cur);
+	  /* print nodes in node-set sequentially */
+	  for (int j = 0; j < (nodes ? nodes->nodeNr : 0); ++j)
+	    {
+              wxString str, val;
+	      xmlNodePtr cur = nodes->nodeTab[j];
+	      switch (cur->type)
+		{
+		case XML_ATTRIBUTE_NODE:
+                  str = wxString((char *) cur->name, wxConvUTF8);
+                  val = wxString((char *) cur->children->content, wxConvUTF8);
+                  strings.Add (_("(ATTR): ") + str + _(" = \"") + val + _("\""));
+		  break;
+		case XML_COMMENT_NODE:
+                  str = wxString((char *) cur->content, wxConvUTF8);
+                  strings.Add (_ ("(COMM): ") + str);
+		  break;
+		case XML_ELEMENT_NODE:
+                  str = wxString((char *) cur->name, wxConvUTF8);
+                  strings.Add (_ ("(ELEM): ") + str);
+		  break;
+		case XML_TEXT_NODE:
+                  str = wxString((char *) cur->content, wxConvUTF8);
+                  strings.Add (_ ("(TEXT): ") + str);
+		default:
+		  break;
+		}
+	    }
+	}
       break;
     case XPATH_STRING:
-      wcid->SetResult (oldres->stringval, curres->stringval);
+      old.Add (wxString ((char *) oldres->stringval, wxConvUTF8));
+      cur.Add (wxString ((char *) curres->stringval, wxConvUTF8));
       break;
     case XPATH_NUMBER:
-      wcid->SetResult (oldres->floatval, curres->floatval);
+      old.Add (wxString::Format(_ ("%.2lf"), oldres->floatval));
+      cur.Add (wxString::Format(_ ("%.2lf"), curres->floatval));
       break;
     case XPATH_BOOLEAN:
-      wcid->SetResult (oldres->boolval ? true : false, curres->boolval ? true : false);
+      old.Add (oldres->boolval == 0 ? _ ("FALSE") : _ ("TRUE"));
+      cur.Add (curres->boolval == 0 ? _ ("FALSE") : _ ("TRUE"));
     default:
       break;
     }
 }
 
-/*
- * WcTreeItemData - associate tree item with its underlying monitor
- */
-WcTreeItemData::WcTreeItemData (wxString name, wxString mf, wxString lastchk, wxString url)
+WcTreeCtrl::WcTreeCtrl (wxWindow* parent, wxWindowID id) : wxTreeCtrl (parent, id, wxPoint (-1, -1), wxSize (200, 100), wxTR_DEFAULT_STYLE)
 {
-  WcTreeItemData::name = name;
-  WcTreeItemData::monfile = mf;
-  WcTreeItemData::lastchk = lastchk;
-  WcTreeItemData::url = url;
+  wxTreeItemId root = AddRoot (_T ("Monitor files"));
+  SetItemData (root, NULL);
+}
+
+wxTreeItemId
+WcTreeCtrl::AppendMonfile (const monfileptr mf)
+{
+    const xmlChar* name = monfile_get_name(mf);
+    wxString wxname = wxString ((char *) name, wxConvUTF8);
+    wxTreeItemId node = AppendItem (GetRootItem (), wxname);
+    SetItemData (node, NULL);
+    return node;
+}
+
+wxTreeItemId
+WcTreeCtrl::AppendMonitor (const wxTreeItemId& parent, const monitorptr m, const metafileptr mef)
+{
+    const xmlChar* name = monitor_get_name(m);
+    wxTreeItemId node = AppendItem (parent, wxString ((char *) name, wxConvUTF8));
+    SetItemData (node, new WcTreeItemData(m, mef));
+    return node;
 }
 
 void
-WcTreeItemData::SetResult (bool oldres, bool curres)
+WcTreeCtrl::OnSelChanged(wxTreeEvent &event)
 {
-  /* TODO: implement me */
+  const WcTreeItemData* data = (WcTreeItemData*) GetItemData (event.GetItem());
+  if (data == NULL)
+  {
+    resGrid->BeginBatch();
+    resGrid->SetColLabelValue (0, _ ("Old Result"));
+    resGrid->DeleteRows (0, resGrid->GetNumberRows ());
+    resGrid->EndBatch();
+    return;
+  }
+  const wxArrayString& cur = data->GetCurArray();
+  const wxArrayString& old = data->GetOldArray();
+  unsigned int rows = old.GetCount();
+  if (cur.GetCount() > rows)
+      rows = cur.GetCount();
+
+  resGrid->BeginBatch();
+  resGrid->SetColLabelValue (0, wxString::Format(_ ("Old Result (%s)"), data->GetLastCheck ().c_str ()));
+  resGrid->DeleteRows (0, resGrid->GetNumberRows ());
+  resGrid->AppendRows (rows);
+  for (unsigned int i = 0; i < old.GetCount(); ++i)
+    resGrid->SetCellValue (i, 0, old[i]);
+  for (unsigned int i = 0; i < cur.GetCount(); ++i)
+    resGrid->SetCellValue (i, 1, cur[i]);
+  resGrid->Show ();
+  resGrid->EndBatch();
+}
+
+
+WcResultGrid::WcResultGrid (wxWindow* parent, wxWindowID id) : wxGrid(parent, id, wxPoint (-1, -1), wxSize (200, 100))
+{
+  CreateGrid (0, 2);
+  SetColLabelValue (0, _ ("Old Result"));
+  SetColLabelValue (1, _ ("Current Result"));
+  EnableEditing (false);
+  EnableDragGridSize (false);
+  EnableDragRowSize (false);
 }
 
 void
-WcTreeItemData::SetResult (double oldres, double curres)
+WcResultGrid::OnSize (wxSizeEvent& event)
 {
-  /* TODO: implement me */
+  wxGrid::OnSize (event);
+  // Calculate width of single column
+  const wxSize& frame_size = event.GetSize ();
+  int column_width = (frame_size.GetWidth () - GetRowLabelSize ());
+  column_width -= 2 * wxSystemSettings::GetMetric(wxSYS_VSCROLL_X);
+  column_width /= 2;
+  if (column_width < GetColMinimalWidth(0))
+    column_width = GetColMinimalWidth(0);
+  // Resize both columns
+  BeginBatch ();
+  SetColSize(0, column_width);
+  SetColSize(1, column_width);
+  EndBatch ();
+}
+
+WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id, wxPoint (-1, -1), wxSize (200, 100), wxLC_REPORT | wxLC_NO_HEADER | wxLC_SINGLE_SEL | wxSUNKEN_BORDER)
+{
+  // Use typewriter/teletype font
+  wxFont *ttFont = new wxFont (wxNORMAL_FONT->GetPointSize (),
+                               wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  SetFont (*ttFont);
+  // Create single column
+  wxListItem itemCol;
+  itemCol.SetText (_T (""));
+  InsertColumn (0, itemCol);
 }
 
 void
-WcTreeItemData::SetResult (xmlChar *oldres, xmlChar *curres)
+WcLogCtrl::OnSize (wxSizeEvent& event)
 {
-  /* TODO: implement me */
-}
-
-void
-WcTreeItemData::SetResult (xmlXPathObjectPtr oldres, xmlXPathObjectPtr curres)
-{
-  /* TODO: implement me */
+  wxListCtrl::OnSize (event);
+  // Calculate width of column
+  int column_width = event.GetSize ().GetWidth ();
+  column_width -= 2 * wxSystemSettings::GetMetric (wxSYS_VSCROLL_X);
+  // Resize column
+  SetColumnWidth (0, column_width);
 }
 
 /*
@@ -220,9 +347,9 @@ WcFrame::WcFrame (const wxChar *title) : wxFrame (NULL, wxID_ANY, title)
   SetIcons (iconsMain);
   // create menu bar
   wxMenu *menuFile = new wxMenu;
-  menuFile->Append (LIST_QUIT, _T ("E&xit\tAlt-X"));
+  menuFile->Append (ID_LIST_QUIT, _T ("E&xit\tAlt-X"));
   wxMenu *menuHelp = new wxMenu;
-  menuHelp->Append (LIST_ABOUT, _T ("&About"));
+  menuHelp->Append (ID_LIST_ABOUT, _T ("&About"));
   wxMenuBar *menubar = new wxMenuBar;
   menubar->Append (menuFile, _T ("&File"));
   menubar->Append (menuHelp, _T ("&Help"));
@@ -234,34 +361,19 @@ WcFrame::WcFrame (const wxChar *title) : wxFrame (NULL, wxID_ANY, title)
   spltWinV = new wxSplitterWindow (spltWinH, wxID_ANY, wxDefaultPosition, wxSize (200, 100));
 
   // create tree control
-  treeCtrl = new wxTreeCtrl (spltWinV, wxID_ANY, wxPoint (-1, -1), wxSize (200, 100), wxTR_DEFAULT_STYLE);
-  wxTreeItemId id, root;
-  root = treeCtrl->AddRoot (_T ("Root"));
-  id = treeCtrl->AppendItem (root, _T ("123"));
-  id = treeCtrl->AppendItem (root, _T ("234"));
+  treeCtrl = new WcTreeCtrl (spltWinV, ID_TREECTRL);
 
-  // create result control
-  resCtrl = new wxTextCtrl (spltWinV, wxID_ANY, wxEmptyString,
-                            wxPoint (-1, -1), wxSize (200, 100), wxTE_MULTILINE |
-                            wxSUNKEN_BORDER | wxTE_READONLY | wxTE_AUTO_URL);
+  // create result grid
+  resGrid = new WcResultGrid (spltWinV, wxID_ANY);
 
   // create log control
-  logCtrl = ::logCtrl = new wxListCtrl (spltWinH, wxID_ANY, wxPoint (-1, -1), wxSize (200, 100), wxLC_REPORT | wxLC_NO_HEADER | wxLC_SINGLE_SEL | wxSUNKEN_BORDER);
-  wxFont *ttFont = new wxFont (wxNORMAL_FONT->GetPointSize (),
-                               wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-  logCtrl->SetFont (*ttFont);
-  // * create column
-  wxListItem itemCol;
-  itemCol.SetText (_T (""));
-  logCtrl->InsertColumn (0, itemCol);
-  // * adjust column widths
-  logCtrl->SetColumnWidth (0, 1000); // FIXME: wxLIST_AUTOSIZE
+  logCtrl = new WcLogCtrl (spltWinH, wxID_ANY);
 
   // finalize splitters
-  spltWinV->SplitVertically (treeCtrl, resCtrl, 0);
-  spltWinV->SetSashGravity (0.5);
+  spltWinV->SplitVertically (treeCtrl, resGrid, 0);
+  spltWinV->SetSashGravity (0.1);
   spltWinH->SplitHorizontally (spltWinV, logCtrl, 0);
-  spltWinH->SetSashGravity (0.8);
+  spltWinH->SetSashGravity (0.75);
 
   // create status bar
   CreateStatusBar (1);
@@ -329,6 +441,7 @@ WcFrame::doCheck (monfileptr mf, int update)
   const xmlChar *mfname;
   int ret, count = 0;
   vpairptr lastvp = NULL;
+  wxTreeItemId mf_node;
   /* read monitor file @mf */
   mfname = monfile_get_name (mf);
   outputf (NOTICE, "Monitor File %s\n", mfname);
@@ -358,9 +471,10 @@ WcFrame::doCheck (monfileptr mf, int update)
                   /* monitor @m reported a change */
                   outputf (WARN, "%s (%s):\n", name, mfname);
                   indent (WARN);
-                  //print_results (WARN, monitor_get_old_result (m),
-                  //	 monitor_get_cur_result (m));
-                  outputf (WARN, "\n");
+                  if (!mf_node.IsOk ())
+                      mf_node = treeCtrl->AppendMonfile (mf);
+                  treeCtrl->AppendMonitor (mf_node, m, mef);
+                  outputf (WARN, "see above.\n");
                   outdent (WARN);
                   /* update cache file, if requested */
                   if (update != 0)
@@ -426,6 +540,17 @@ WcFrame::doRemove (monfileptr mf)
     }
   outdent (NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
+}
+
+void
+WcFrame::finalize (int count)
+{
+  // Adjust log column width
+  logCtrl->SetColumnWidth (0, wxLIST_AUTOSIZE);
+  if (count < 0)
+    SetStatusText (_ ("Error(s) occured, see log for details."));
+  else
+    SetStatusText (wxString::Format (_ ("webchanges reported %d triggered monitor(s)."), count));
 }
 
 /*
@@ -547,7 +672,7 @@ WcApp::OnCmdLineParsed (wxCmdLineParser& parser)
   if (parser.Found (_ ("q")))
     lvl_verbos = WARN;
   /* Parameters */
-  for (int i = 0; i < parser.GetParamCount (); ++i)
+  for (unsigned int i = 0; i < parser.GetParamCount (); ++i)
     xmlListPushBack (filelist, strdup (OSFILENAME (parser.GetParam (i))));
   return true;
 }
@@ -652,7 +777,12 @@ WcApp::OnInit ()
   xmlListDelete (filelist);
   xmlCleanupParser ();
 
+  /* Exit if nothing has happened. */
+  if (logCtrl->GetItemCount () == 0 && treeCtrl->GetCount () == 1)
+      return false;
+
   /* Display main window. */
+  frame->finalize (count);
   frame->Show (true);
   SetTopWindow (frame);
 
