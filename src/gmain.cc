@@ -20,6 +20,7 @@
 
 #include <wx/wx.h>
 #include <wx/treectrl.h>
+#include <wx/listctrl.h>
 #include <wx/splitter.h>
 #include <wx/cmdline.h>
 #include <wx/grid.h>
@@ -76,7 +77,7 @@ END_EVENT_TABLE ()
 IMPLEMENT_APP (WcApp)
 
 
-int lvl_verbos = NOTICE; /* level for stdout-verbosity */
+int lvl_verbos = LVL_NOTICE; /* level for stdout-verbosity */
 int lvl_indent = 0; /* level for indentation */
 bool force = false; /* force checking */
 
@@ -96,13 +97,13 @@ outputf (int l, const char *fmt, ...)
   vsnprintf ((char*) & str, 1023, fmt, args);
   wxListItem item;
   item.SetId (logCtrl->GetItemCount ());
-  item.SetText (wxString (str, wxConvUTF8));
+  item.SetText (wxString (str, wxConvUTF8).Trim());
   switch (l)
     {
-    case WARN:
+    case LVL_WARN:
       item.SetBackgroundColour (wxColour (255, 255, 120));
       break;
-    case ERROR:
+    case LVL_ERR:
       item.SetBackgroundColour (wxColour (255, 120, 120));
     }
   logCtrl->InsertItem (item);
@@ -135,7 +136,7 @@ xml_errfunc (void *ctx, const char *msg, ...)
 #ifdef SHOW_HTML_ERRORS
   va_list args;
   char str[1024]; // FIXME: allocating constant memory portion, ugly!
-  if (verbosity < DEBUG)
+  if (verbosity < LVL_DEBUG)
     return;
   va_start (args, msg);
   vsnprintf ((char*) & str, 1023, msg, args);
@@ -413,20 +414,20 @@ WcFrame::doInit (monfileptr mf)
   int ret;
   vpairptr vp;
   /* read monitor file @mf */
-  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (LVL_NOTICE);
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
         break;
-      outputf (NOTICE, "Downloading %s\n", vpair_get_url (vp));
-      indent (NOTICE);
-      outputf (NOTICE, "=> %s\n", vpair_get_cache (vp));
+      outputf (LVL_NOTICE, "Downloading %s\n", vpair_get_url (vp));
+      indent (LVL_NOTICE);
+      outputf (LVL_NOTICE, "=> %s\n", vpair_get_cache (vp));
       vpair_download (vp);
-      outdent (NOTICE);
+      outdent (LVL_NOTICE);
       vpair_close (vp);
     }
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
@@ -444,8 +445,8 @@ WcFrame::doCheck (monfileptr mf, int update)
   wxTreeItemId mf_node;
   /* read monitor file @mf */
   mfname = monfile_get_name (mf);
-  outputf (NOTICE, "Monitor File %s\n", mfname);
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", mfname);
+  indent (LVL_NOTICE);
   /* read metadata file @mef */
   mef = metafile_open (mf);
   metafile_read (mef);
@@ -461,21 +462,21 @@ WcFrame::doCheck (monfileptr mf, int update)
       if (force != 0 || time (NULL) >= nextchk)
         {
           /* checking of monitor @m is necessary */
-          outputf (NOTICE, "Checking %s now:\n", name);
-          indent (NOTICE);
+          outputf (LVL_NOTICE, "Checking %s now:\n", name);
+          indent (LVL_NOTICE);
           if ((ret = monitor_evaluate (m)) == RET_OK)
             {
               /* monitor @m was evaluable */
               if (monitor_triggered (m) != 0)
                 {
                   /* monitor @m reported a change */
-                  outputf (WARN, "%s (%s):\n", name, mfname);
-                  indent (WARN);
+                  outputf (LVL_WARN, "%s (%s):\n", name, mfname);
+                  indent (LVL_WARN);
                   if (!mf_node.IsOk ())
                       mf_node = treeCtrl->AppendMonfile (mf);
                   treeCtrl->AppendMonitor (mf_node, m, mef);
-                  outputf (WARN, "see above.\n");
-                  outdent (WARN);
+                  outputf (LVL_WARN, "see above.\n");
+                  outdent (LVL_WARN);
                   /* update cache file, if requested */
                   if (update != 0)
                     {
@@ -483,29 +484,29 @@ WcFrame::doCheck (monfileptr mf, int update)
                       if (lastvp != vp)
                         {
                           /* update of @vp necessary */
-                          outputf (NOTICE, "Updating %s\n",
+                          outputf (LVL_NOTICE, "Updating %s\n",
                                    vpair_get_cache (vp));
-                          indent (NOTICE);
+                          indent (LVL_NOTICE);
                           vpair_download (vp);
-                          outdent (NOTICE);
+                          outdent (LVL_NOTICE);
                           lastvp = vp;
                         }
                       else
-                        outputf (DEBUG, "Skipping update, already done\n");
+                        outputf (LVL_DEBUG, "Skipping update, already done\n");
                     }
                   count++;
                 }
               else
-                outputf (NOTICE, "%s NOT triggered.\n", name);
+                outputf (LVL_NOTICE, "%s NOT triggered.\n", name);
               monitor_set_last_check (mef, m, time (NULL));
             }
           else
-            outputf (WARN, "Skipping %s (%s), not evaluable.\n", name,
+            outputf (LVL_WARN, "Skipping %s (%s), not evaluable.\n", name,
                      mfname);
-          outdent (NOTICE);
+          outdent (LVL_NOTICE);
         }
       else
-        outputf (NOTICE, "Skipping %s, next checking %s", name,
+        outputf (LVL_NOTICE, "Skipping %s, next checking %s", name,
                  ctime (&nextchk));
       monitor_free (m);
     }
@@ -513,7 +514,7 @@ WcFrame::doCheck (monfileptr mf, int update)
   if (ret != RET_ERROR)
     metafile_write (mef);
   metafile_close (mef);
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? count : RET_ERROR);
 }
 
@@ -526,19 +527,19 @@ WcFrame::doRemove (monfileptr mf)
   int ret;
   vpairptr vp;
   /* read monitor file @mf */
-  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (LVL_NOTICE);
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
         break;
-      outputf (NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
-      indent (NOTICE);
+      outputf (LVL_NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
+      indent (LVL_NOTICE);
       vpair_remove (vp);
-      outdent (NOTICE);
+      outdent (LVL_NOTICE);
       vpair_close (vp);
     }
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
@@ -684,11 +685,11 @@ WcApp::OnCmdLineParsed (wxCmdLineParser& parser)
     force = true;
   wxString wxstr;
   if (parser.Found (_ ("b"), &wxstr))
-    userdir = strdup (wxstr.fn_str ());
+    userdir = strdup (OSFILENAME (wxstr));
   if (parser.Found (_ ("v")))
     lvl_verbos++;
   if (parser.Found (_ ("q")))
-    lvl_verbos = WARN;
+    lvl_verbos = LVL_WARN;
   /* Parameters */
   for (unsigned int i = 0; i < parser.GetParamCount (); ++i)
     xmlListPushBack (filelist, strdup (OSFILENAME (parser.GetParam (i))));
@@ -764,13 +765,13 @@ WcApp::OnInit ()
       if (mf == NULL)
         {
           /* Skip this monitor file. */
-          outputf (ERROR, "Error reading monitor file %s\n\n", filename);
+          outputf (LVL_ERR, "Error reading monitor file %s\n\n", filename);
           xmlListPopFront (filelist);
           count = -1;
           continue;
         }
       /* Process monitor file. */
-      outputf (INFO, "Processing monitor file %s\n", filename);
+      outputf (LVL_INFO, "Processing monitor file %s\n", filename);
       switch (action)
         {
         case INIT:

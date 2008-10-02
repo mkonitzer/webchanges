@@ -65,17 +65,17 @@ vpair_open (const xmlChar * url, const basedirptr bd)
   vp = (vpairptr) xmlMalloc (sizeof (vpair));
   if (vp == NULL)
     {
-      outputf (ERROR, "[vpair] Out of memory\n");
+      outputf (LVL_ERR, "[vpair] Out of memory\n");
       return NULL;
     }
   /* fill vpair struct */
   memset (vp, 0, sizeof (vpair));
   vp->url = xmlStrdup (url);
-  outputf (DEBUG, "[vpair] Using current document %s\n", vp->url);
+  outputf (LVL_DEBUG, "[vpair] Using current document %s\n", vp->url);
   /* calculate cache filename */
   filename = url_to_cache (vp->url);
   vp->cache = basedir_buildpath_cache (bd, filename);
-  outputf (DEBUG, "[vpair] Using old document %s\n", vp->cache);
+  outputf (LVL_DEBUG, "[vpair] Using old document %s\n", vp->cache);
   free (filename);
   return vp;
 }
@@ -90,14 +90,14 @@ read_into_buffer (const char *filename)
        xmlParserInputBufferCreateFilename (filename,
 					   XML_CHAR_ENCODING_NONE)) == NULL)
     {
-      outputf (WARN, "[vpair] Could not open %s\n", filename);
+      outputf (LVL_WARN, "[vpair] Could not open %s\n", filename);
       return NULL;
     }
   /* read document */
   while ((read = xmlParserInputBufferRead (buf, 2048)) > 0);
   if (read < 0)
     {
-      outputf (WARN, "[vpair] Error reading %s\n", filename);
+      outputf (LVL_WARN, "[vpair] Error reading %s\n", filename);
       xmlFreeParserInputBuffer (buf);
       return NULL;
     }
@@ -108,17 +108,17 @@ int
 vpair_parse (vpairptr vp)
 {
   /* read and parse old document (do not keep in memory) */
-  outputf (INFO, "[vpair] Fetching cached document %s\n", vp->cache);
+  outputf (LVL_INFO, "[vpair] Fetching cached document %s\n", vp->cache);
   if ((vp->olddoc = htmlReadFile (vp->cache, NULL, 0)) == NULL)
     {
-      outputf (WARN, "[vpair] Could not parse %s\n", vp->cache);
+      outputf (LVL_WARN, "[vpair] Could not parse %s\n", vp->cache);
       return RET_ERROR;
     }
   /* read current document (and keep in memory) */
-  outputf (INFO, "[vpair] Fetching document %s\n", vp->url);
+  outputf (LVL_INFO, "[vpair] Fetching document %s\n", vp->url);
   if ((vp->curbuf = read_into_buffer ((char *) vp->url)) == NULL)
     {
-      outputf (WARN, "[vpair] Could not open %s\n", vp->url);
+      outputf (LVL_WARN, "[vpair] Could not open %s\n", vp->url);
       xmlFreeDoc (vp->olddoc);
       vp->olddoc = NULL;
       return RET_ERROR;
@@ -129,7 +129,7 @@ vpair_parse (vpairptr vp)
 		       xmlBufferLength (vp->curbuf->buffer),
 		       (const char *) vp->url, NULL, 0)) == NULL)
     {
-      outputf (WARN, "[vpair] Could not parse %s\n", vp->url);
+      outputf (LVL_WARN, "[vpair] Could not parse %s\n", vp->url);
       xmlFreeParserInputBuffer (vp->curbuf);
       vp->curbuf = NULL;
       xmlFreeDoc (vp->olddoc);
@@ -147,17 +147,17 @@ vpair_download (vpairptr vp)
   /* read current document (if necessary) */
   if (vp->curbuf == NULL)
     {
-      outputf (INFO, "[vpair] Fetching document %s\n", vp->url);
+      outputf (LVL_INFO, "[vpair] Fetching document %s\n", vp->url);
       if ((vp->curbuf = read_into_buffer ((char *) vp->url)) == NULL)
 	{
-	  outputf (WARN, "[vpair] Could not open %s\n", vp->url);
+	  outputf (LVL_WARN, "[vpair] Could not open %s\n", vp->url);
 	  return RET_ERROR;
 	}
     }
   /* open cache */
   if ((output = xmlOutputBufferCreateFilename (vp->cache, NULL, 0)) == NULL)
     {
-      outputf (WARN, "[vpair] Could not open %s\n", vp->cache);
+      outputf (LVL_WARN, "[vpair] Could not open %s\n", vp->cache);
       return RET_ERROR;
     }
   /* write current document to cache */
@@ -168,10 +168,10 @@ vpair_download (vpairptr vp)
   xmlOutputBufferClose (output);
   if (written == -1)
     {
-      outputf (WARN, "[vpair] Error writing to %s\n", vp->cache);
+      outputf (LVL_WARN, "[vpair] Error writing to %s\n", vp->cache);
       return RET_ERROR;
     }
-  outputf (INFO, "[vpair] Successfully downloaded %s to %s\n",
+  outputf (LVL_INFO, "[vpair] Successfully downloaded %s to %s\n",
 	   vp->url, vp->cache);
   return RET_OK;
 }
@@ -181,10 +181,10 @@ vpair_remove (vpairptr vp)
 {
   if (remove (vp->cache) != 0)
     {
-      outputf (WARN, "[vpair] Could not remove %s\n", vp->cache);
+      outputf (LVL_WARN, "[vpair] Could not remove %s\n", vp->cache);
       return RET_ERROR;
     }
-  outputf (INFO, "[vpair] Successfully removed %s\n", vp->cache);
+  outputf (LVL_INFO, "[vpair] Successfully removed %s\n", vp->cache);
   return RET_OK;
 }
 

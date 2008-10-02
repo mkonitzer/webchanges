@@ -40,7 +40,7 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 #endif /* ! HAVE_GETOPT_H */
 
-static int lvl_verbos = NOTICE;	/* level for stdout-verbosity */
+static int lvl_verbos = LVL_NOTICE;	/* level for stdout-verbosity */
 static int lvl_indent = 0;	/* level for indentation */
 static int force = 0;		/* force checking */
 
@@ -58,7 +58,7 @@ outputf (int l, const char *fmt, ...)
   va_list args;
   if (lvl_verbos < l)
     return;
-  f = (l != ERROR) ? stdout : stderr;
+  f = (l != LVL_ERR) ? stdout : stderr;
   for (i = 0; i < lvl_indent; i++)
     fprintf (f, "   ");
   va_start (args, fmt);
@@ -91,7 +91,7 @@ xml_errfunc (void *ctx, const char *msg, ...)
 {
 #ifdef SHOW_HTML_ERRORS
   va_list args;
-  if (verbosity < DEBUG)
+  if (verbosity < LVL_DEBUG)
     return;
   va_start (args, msg);
   vfprintf (stderr, msg, args);
@@ -178,20 +178,20 @@ do_init (monfileptr mf)
   int ret;
   vpairptr vp;
   /* read monitor file @mf */
-  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (LVL_NOTICE);
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
 	break;
-      outputf (NOTICE, "Downloading %s\n", vpair_get_url (vp));
-      indent (NOTICE);
-      outputf (NOTICE, "=> %s\n", vpair_get_cache (vp));
+      outputf (LVL_NOTICE, "Downloading %s\n", vpair_get_url (vp));
+      indent (LVL_NOTICE);
+      outputf (LVL_NOTICE, "=> %s\n", vpair_get_cache (vp));
       vpair_download (vp);
-      outdent (NOTICE);
+      outdent (LVL_NOTICE);
       vpair_close (vp);
     }
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
@@ -208,8 +208,8 @@ do_check (monfileptr mf, int update)
   vpairptr lastvp = NULL;
   /* read monitor file @mf */
   mfname = monfile_get_name (mf);
-  outputf (NOTICE, "Monitor File %s\n", mfname);
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", mfname);
+  indent (LVL_NOTICE);
   /* read metadata file @mef */
   mef = metafile_open (mf);
   metafile_read (mef);
@@ -225,20 +225,20 @@ do_check (monfileptr mf, int update)
       if (force != 0 || time (NULL) >= nextchk)
 	{
 	  /* checking of monitor @m is necessary */
-	  outputf (NOTICE, "Checking %s now:\n", name);
-	  indent (NOTICE);
+	  outputf (LVL_NOTICE, "Checking %s now:\n", name);
+	  indent (LVL_NOTICE);
 	  if ((ret = monitor_evaluate (m)) == RET_OK)
 	    {
 	      /* monitor @m was evaluable */
 	      if (monitor_triggered (m) != 0)
 		{
 		  /* monitor @m reported a change */
-		  outputf (WARN, "%s (%s):\n", name, mfname);
-		  indent (WARN);
-		  print_results (WARN, monitor_get_old_result (m),
+		  outputf (LVL_WARN, "%s (%s):\n", name, mfname);
+		  indent (LVL_WARN);
+		  print_results (LVL_WARN, monitor_get_old_result (m),
 				 monitor_get_cur_result (m));
-		  outputf (WARN, "\n");
-		  outdent (WARN);
+		  outputf (LVL_WARN, "\n");
+		  outdent (LVL_WARN);
 		  /* update cache file, if requested */
 		  if (update != 0)
 		    {
@@ -246,29 +246,29 @@ do_check (monfileptr mf, int update)
 		      if (lastvp != vp)
 			{
 			  /* update of @vp necessary */
-			  outputf (NOTICE, "Updating %s\n",
+			  outputf (LVL_NOTICE, "Updating %s\n",
 				   vpair_get_cache (vp));
-			  indent (NOTICE);
+			  indent (LVL_NOTICE);
 			  vpair_download (vp);
-			  outdent (NOTICE);
+			  outdent (LVL_NOTICE);
 			  lastvp = vp;
 			}
 		      else
-			outputf (DEBUG, "Skipping update, already done\n");
+			outputf (LVL_DEBUG, "Skipping update, already done\n");
 		    }
 		  count++;
 		}
 	      else
-		outputf (NOTICE, "%s NOT triggered.\n", name);
+		outputf (LVL_NOTICE, "%s NOT triggered.\n", name);
 	      monitor_set_last_check (mef, m, time (NULL));
 	    }
 	  else
-	    outputf (WARN, "Skipping %s (%s), not evaluable.\n", name,
+	    outputf (LVL_WARN, "Skipping %s (%s), not evaluable.\n", name,
 		     mfname);
-	  outdent (NOTICE);
+	  outdent (LVL_NOTICE);
 	}
       else
-	outputf (NOTICE, "Skipping %s, next checking %s", name,
+	outputf (LVL_NOTICE, "Skipping %s, next checking %s", name,
 		 ctime (&nextchk));
       monitor_free (m);
     }
@@ -276,7 +276,7 @@ do_check (monfileptr mf, int update)
   if (ret != RET_ERROR)
     metafile_write (mef);
   metafile_close (mef);
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? count : RET_ERROR);
 }
 
@@ -289,19 +289,19 @@ do_remove (monfileptr mf)
   int ret;
   vpairptr vp;
   /* read monitor file @mf */
-  outputf (NOTICE, "Monitor File %s\n", monfile_get_name (mf));
-  indent (NOTICE);
+  outputf (LVL_NOTICE, "Monitor File %s\n", monfile_get_name (mf));
+  indent (LVL_NOTICE);
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
 	break;
-      outputf (NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
-      indent (NOTICE);
+      outputf (LVL_NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
+      indent (LVL_NOTICE);
       vpair_remove (vp);
-      outdent (NOTICE);
+      outdent (LVL_NOTICE);
       vpair_close (vp);
     }
-  outdent (NOTICE);
+  outdent (LVL_NOTICE);
   return (ret != RET_ERROR ? RET_OK : RET_ERROR);
 }
 
@@ -396,7 +396,7 @@ main (int argc, char **argv)
 	  lvl_verbos++;
 	  break;
 	case 'q':		/* quiet */
-	  lvl_verbos = WARN;
+	  lvl_verbos = LVL_WARN;
 	  break;
 	  /* errors */
 	case '?':
@@ -474,13 +474,13 @@ main (int argc, char **argv)
       if (mf == NULL)
 	{
 	  /* Skip this monitor file. */
-	  outputf (ERROR, "Error reading monitor file %s\n\n", filename);
+	  outputf (LVL_ERR, "Error reading monitor file %s\n\n", filename);
 	  xmlListPopFront (filelist);
 	  count = -1;
 	  continue;
 	}
       /* Process monitor file. */
-      outputf (INFO, "Processing monitor file %s\n", filename);
+      outputf (LVL_INFO, "Processing monitor file %s\n", filename);
       switch (action)
 	{
 	case INIT:

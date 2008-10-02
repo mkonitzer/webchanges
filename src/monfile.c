@@ -46,7 +46,7 @@ static xmlExternalEntityLoader default_loader = NULL;
 static void
 struct_error (void *userData, xmlErrorPtr error)
 {
-  outputf (ERROR, "[monfile] Error at line %d, level %d: %s\n", error->line,
+  outputf (LVL_ERR, "[monfile] Error at line %d, level %d: %s\n", error->line,
 	   error->level, error->message);
 }
 
@@ -56,7 +56,7 @@ entity_loader (const char *url, const char *id, xmlParserCtxtPtr ctx)
   xmlParserInputBufferPtr inp;
   if (url == NULL || strcmp (url, MONFILE_DTD_URL) != 0)
     {
-      outputf (ERROR, "[monfile] Wrong DTD %s, please use %s instead!\n",
+      outputf (LVL_ERR, "[monfile] Wrong DTD %s, please use %s instead!\n",
 	       url, MONFILE_DTD_URL);
       return NULL;
     }
@@ -79,7 +79,7 @@ monfile_open (const char *filename, const basedirptr bd)
   mf = (monfileptr) xmlMalloc (sizeof (monfile));
   if (mf == NULL)
     {
-      outputf (ERROR, "[monfile] Out of memory\n");
+      outputf (LVL_ERR, "[monfile] Out of memory\n");
       return NULL;
     }
   /* fill monfile struct */
@@ -96,7 +96,7 @@ monfile_open (const char *filename, const basedirptr bd)
 				 XML_PARSE_DTDATTR | XML_PARSE_DTDVALID);
   if (mf->reader == NULL)
     {
-      outputf (ERROR, "[monfile] Could not open %s\n", filename);
+      outputf (LVL_ERR, "[monfile] Could not open %s\n", filename);
       monfile_close (mf);
       return NULL;
     }
@@ -110,7 +110,7 @@ monfile_open (const char *filename, const basedirptr bd)
       /* do we have a valid monfile up to now? */
       if (xmlTextReaderIsValid (mf->reader) != 1)
 	{
-	  outputf (ERROR, "[monfile] Failed to validate!\n");
+	  outputf (LVL_ERR, "[monfile] Failed to validate!\n");
 	  monfile_close (mf);
 	  return NULL;
 	}
@@ -125,7 +125,7 @@ monfile_open (const char *filename, const basedirptr bd)
     }
   if (mf->name == NULL)
     {
-      outputf (ERROR, "[monfile] Failed to read!\n");
+      outputf (LVL_ERR, "[monfile] Failed to read!\n");
       monfile_close (mf);
       return NULL;
     }
@@ -143,14 +143,14 @@ monfile_get_next_vpair (const monfileptr mf, vpairptr * vp)
       /* do we have a valid monfile @mf up to now? */
       if (xmlTextReaderIsValid (mf->reader) != 1)
 	{
-	  outputf (ERROR, "[monfile] Failed to validate!\n");
+	  outputf (LVL_ERR, "[monfile] Failed to validate!\n");
 	  return RET_ERROR;
 	}
       name = xmlTextReaderConstName (mf->reader);
       switch (xmlTextReaderNodeType (mf->reader))
 	{
 	case XML_READER_TYPE_ELEMENT:
-	  outputf (DEBUG, "[monfile] Got <%s...\n", name);
+	  outputf (LVL_DEBUG, "[monfile] Got <%s...\n", name);
 	  if (xmlStrEqual (name, BAD_CAST "document") == 1)
 	    {
 	      xmlChar *url = xmlTextReaderGetAttribute (mf->reader,
@@ -163,7 +163,7 @@ monfile_get_next_vpair (const monfileptr mf, vpairptr * vp)
 	    }
 	  break;
 	case XML_READER_TYPE_END_ELEMENT:
-	  outputf (DEBUG, "[monfile] Got </%s>\n", name);
+	  outputf (LVL_DEBUG, "[monfile] Got </%s>\n", name);
 	  if (xmlStrEqual (name, BAD_CAST "document") == 1)
 	    {
 	      /* complete version pair - ready! */
@@ -177,7 +177,7 @@ monfile_get_next_vpair (const monfileptr mf, vpairptr * vp)
   /* read error */
   if (read == -1)
     {
-      outputf (ERROR, "[monfile] Failed to read!\n");
+      outputf (LVL_ERR, "[monfile] Failed to read!\n");
       return RET_ERROR;
     }
   /* end-of-file */
@@ -197,7 +197,7 @@ monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
       /* do we have a valid monfile @mf up to now? */
       if (xmlTextReaderIsValid (mf->reader) != 1)
 	{
-	  outputf (ERROR, "[monfile] Failed to validate!\n");
+	  outputf (LVL_ERR, "[monfile] Failed to validate!\n");
 	  xmlSafeFree (lasttext);
 	  return RET_ERROR;
 	}
@@ -205,7 +205,7 @@ monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
       switch (xmlTextReaderNodeType (mf->reader))
 	{
 	case XML_READER_TYPE_ELEMENT:
-	  outputf (DEBUG, "[monfile] Got <%s ...>\n", name);
+	  outputf (LVL_DEBUG, "[monfile] Got <%s ...>\n", name);
 	  if (xmlStrEqual (name, BAD_CAST "document") == 1)
 	    {
 	      xmlChar *url = xmlTextReaderGetAttribute (mf->reader,
@@ -216,7 +216,7 @@ monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
 	      if (mf->vp == NULL)
 		{
 		  /* skip this <document>-block */
-		  outputf (NOTICE, "[monfile] Skipping document\n");
+		  outputf (LVL_NOTICE, "[monfile] Skipping document\n");
 		  skipdoc = 1;
 		  xmlSafeFree (lasttext);
 		  return RET_WARNING;
@@ -239,7 +239,7 @@ monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
 	    }
 	  break;
 	case XML_READER_TYPE_END_ELEMENT:
-	  outputf (DEBUG, "[monfile] Got </%s>\n", name);
+	  outputf (LVL_DEBUG, "[monfile] Got </%s>\n", name);
 	  if (xmlStrEqual (name, BAD_CAST "document") == 1)
 	    {
 	      skipdoc = 0;
@@ -285,7 +285,7 @@ monfile_get_next_monitor (const monfileptr mf, monitorptr * mon)
   /* read error */
   if (read == -1)
     {
-      outputf (ERROR, "[monfile] Failed to read!\n");
+      outputf (LVL_ERR, "[monfile] Failed to read!\n");
       return RET_ERROR;
     }
   /* end-of-file */

@@ -141,7 +141,7 @@ basedir_open (const char *dirname)
   bd = (basedirptr) xmlMalloc (sizeof (basedir));
   if (bd == NULL)
     {
-      outputf (ERROR, "[basedir] Out of memory\n");
+      outputf (LVL_ERR, "[basedir] Out of memory\n");
       return NULL;
     }
   memset (bd, 0, sizeof (basedir));
@@ -152,19 +152,19 @@ basedir_open (const char *dirname)
       if (strcmp (dirname, ".") == 0)
 	{
 	  /* Special case: "." means "take current directory */
-	  outputf (INFO,
+	  outputf (LVL_INFO,
 		   "[basedir] Using current directory as base directory.\n");
 	  return bd;
 	}
       if (dir_exists (dirname) == 0)
 	{
-	  outputf (ERROR,
+	  outputf (LVL_ERR,
 		   "[basedir] Base directory '%s' does not exist, please create it first.\n",
 		   dirname);
 	  xmlFree (bd);
 	  return NULL;
 	}
-      outputf (INFO, "[basedir] Using base directory '%s'.\n", dirname);
+      outputf (LVL_INFO, "[basedir] Using base directory '%s'.\n", dirname);
       bd->base_dir = strdup (dirname);
     }
   else
@@ -176,21 +176,21 @@ basedir_open (const char *dirname)
 	  /* Take current directory (as fallback) */
 	  if (defaultbase != NULL)
 	    {
-	      outputf (INFO,
+	      outputf (LVL_INFO,
 		       "[basedir] Default base directory '%s' does not exist, please create it first.\n",
 		       defaultbase);
 	      free (defaultbase);
 	      defaultbase = NULL;
 	    }
 	  else
-	    outputf (WARN,
+	    outputf (LVL_WARN,
 		     "[basedir] Could not determine default base directory.\n");
-	  outputf (INFO,
+	  outputf (LVL_INFO,
 		   "[basedir] Using current directory as base directory.\n");
 	  return bd;
 	}
       /* Take just determined default directory */
-      outputf (INFO, "[basedir] Using default base directory '%s'.\n",
+      outputf (LVL_INFO, "[basedir] Using default base directory '%s'.\n",
 	       defaultbase);
       bd->base_dir = defaultbase;
     }
@@ -241,7 +241,7 @@ dir_safe_create (const char *dirname)
 {
   if (dir_exists (dirname) == 0)
     {
-      outputf (INFO, "[basedir] Directory '%s' does not exist, creating.\n",
+      outputf (LVL_INFO, "[basedir] Directory '%s' does not exist, creating.\n",
 	       dirname);
 #ifndef _WIN32
       if (mkdir (dirname, 0755) != 0)
@@ -249,7 +249,7 @@ dir_safe_create (const char *dirname)
       if (mkdir (dirname) != 0)
 #endif
 	{
-	  outputf (ERROR, "[basedir] Could not create directory '%s'.\n",
+	  outputf (LVL_ERR, "[basedir] Could not create directory '%s'.\n",
 		   dirname);
 	  return RET_ERROR;
 	}
@@ -312,14 +312,14 @@ basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list)
   dir = opendir (bd->monfile_dir);
   if (dir == NULL)
     {
-      outputf (ERROR,
+      outputf (LVL_ERR,
 	       "[basedir] Could not open monitor file directory '%s' (%s)\n",
 	       bd->monfile_dir, strerror (errno));
       return NULL;
     }
 
   /* Check each entry for file property. */
-  outputf (DEBUG, "[basedir] Processing monitor file directory '%s'.\n",
+  outputf (LVL_DEBUG, "[basedir] Processing monitor file directory '%s'.\n",
 	   bd->monfile_dir);
   entry = readdir (dir);
   while (entry != NULL)
@@ -327,12 +327,12 @@ basedir_get_all_monfiles (const basedirptr bd, xmlListPtr list)
       char *fullpath = dir_join (bd->monfile_dir, entry->d_name);
       if (file_exists (fullpath) != 0)
 	{
-	  outputf (DEBUG, "[basedir] Adding monitor file '%s'.\n",
+	  outputf (LVL_DEBUG, "[basedir] Adding monitor file '%s'.\n",
 		   entry->d_name);
 	  xmlListPushBack (list, strdup (entry->d_name));
 	}
       else
-	outputf (DEBUG, "[basedir] Ignoring directory entry '%s'.\n",
+	outputf (LVL_DEBUG, "[basedir] Ignoring directory entry '%s'.\n",
 		 entry->d_name);
       free (fullpath);
       entry = readdir (dir);
