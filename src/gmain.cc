@@ -279,6 +279,7 @@ WcTreeCtrl::OnSelChanged(wxTreeEvent &event)
     resGrid->SetCellValue (i, 1, cur[i]);
   resGrid->Show ();
   resGrid->EndBatch();
+  event.Skip();
 }
 
 
@@ -295,7 +296,6 @@ WcResultGrid::WcResultGrid (wxWindow* parent, wxWindowID id) : wxGrid(parent, id
 void
 WcResultGrid::OnSize (wxSizeEvent& event)
 {
-  wxGrid::OnSize (event);
   // Calculate width of single column
   const wxSize& frame_size = event.GetSize ();
   int column_width = (frame_size.GetWidth () - GetRowLabelSize ());
@@ -308,6 +308,7 @@ WcResultGrid::OnSize (wxSizeEvent& event)
   SetColSize(0, column_width);
   SetColSize(1, column_width);
   EndBatch ();
+  event.Skip();
 }
 
 WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id, wxPoint (-1, -1), wxSize (200, 100), wxLC_REPORT | wxLC_NO_HEADER | wxLC_SINGLE_SEL | wxSUNKEN_BORDER)
@@ -325,12 +326,12 @@ WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id,
 void
 WcLogCtrl::OnSize (wxSizeEvent& event)
 {
-  wxListCtrl::OnSize (event);
   // Calculate width of column
   int column_width = event.GetSize ().GetWidth ();
   column_width -= 2 * wxSystemSettings::GetMetric (wxSYS_VSCROLL_X);
   // Resize column
   SetColumnWidth (0, column_width);
+  event.Skip();
 }
 
 /*
@@ -552,6 +553,7 @@ WcFrame::finalize (int count)
     SetStatusText (_ ("Error(s) occured, see log for details."));
   else
     SetStatusText (wxString::Format (_ ("webchanges reported %d triggered monitor(s)."), count));
+  treeCtrl->SetFocus();
 }
 
 /*
