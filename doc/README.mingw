@@ -1,35 +1,67 @@
-You can build webchanges as a native win32 executable the following (debian) way:
+You can build webchanges as statically linked native win32 executable on a
+Debian (http://www.debian.org) lenny system as shown below.
 
----
+* Install mingw-4.2.1.dfsg-1:
+    apt-get install mingw32
 
-* mingw-3.4.5:
-	apt-get install mingw32
+* Setup environment variables (common for all of the below):
+    export MINGWPREFIX="$HOME/mingw"
+    export PATH="/usr/i586-mingw32msvc/bin:$MINGWPREFIX/bin:$PATH"
+    export CC=i586-mingw32msvc-gcc 
+    export CXX=i586-mingw32msvc-g++
+    export WINDRES=i586-mingw32msvc-windres
 
-* libiconv-1.11 (http://www.gnu.org/software/libiconv) **
-	CFLAGS="-Wall -O2" ./configure --host=i586-mingw32msvc \
-	    --prefix=/usr/i586-mingw32msvc/
-	make
-	make install
+* Compile libiconv-1.12 (http://www.gnu.org/software/libiconv):
+    ./configure --build=mingw32 --prefix=$MINGWPREFIX --enable-static \
+	--disable-shared
+    make
+    make install
 
-* libxml2-2.6.27 (http://xmlsoft.org) **
-	CFLAGS="-Wall -O2" ./configure --host=i586-mingw32msvc \
-	    --prefix=/usr/i586-mingw32msvc/ --without-python
-	make
-	make install
+* Compile libxml2-2.7.1 (http://xmlsoft.org):
+    ./configure --build=mingw32 --prefix=$MINGWPREFIX --enable-static \
+	--disable-shared --without-threads --without-python --without-legacy \
+	--without-modules --without-c14 --without-catalog --without-debug \
+	--without-docbook --without-schematron --without-regexps
+    make
+    make install
 
-* wxWidgets 2.6.3 (http://www.wxwidgets.org)
-	./configure --with-msw --target=i586-mingw32msvc \
-	    --host=i586-mingw32msvc --build=i386-linux \
-	    --prefix=/usr/i586-mingw32msvc
-	make
-	make install
+    Fix $MINGWPREFIX/bin/xml2-config:
 
-* webchanges:
-	CFLAGS="-L/usr/i586-mingw32msvc/lib -DLIBXML_STATIC" ./configure --host=i586-mingw32msvc
-	make
-	cd src
-	i586-mingw32msvc-gcc evalxpath.o -o evalxpath.exe -lxml2 -liconv -lws2_32
+    --- xml2-config.old	2008-10-02 13:20:54.000000000 +0200
+    +++ xml2-config	2008-10-02 13:21:12.000000000 +0200
+    @@ -82,17 +82,7 @@
+		    ;;
+     
+	 --libs)
+    -        if [ "`uname`" = "Linux" ]
+    -	then
+    -	    if [ "-L${libdir}" = "-L/usr/lib" -o "-L${libdir}" = "-L/usr/lib64" ]
+    -	    then
+    -		echo -lxml2      
+    -	    else
+    -		echo -L${libdir} -lxml2      
+    -	    fi
+    -	else
+		echo -L${libdir} -lxml2      -lws2_32
+    -	fi
+		    ;;
+     
+	 *)
 
----
+* Compile wxMSW-2.8.9 (http://www.wxwidgets.org):
+    ./configure --build=mingw32 --prefix=$MINGWPREFIX --enable-static \
+	--disable-shared --with-msw --enable-unicode --disable-threads \
+	--without-subdirs --without-expat --without-regex --disable-compat26 \
+	--without-zlib --disable-html --disable-richtext --without-libtiff \
+	--disable-postscript --without-libpng --disable-tga --disable-gif \
+	--disable-png --disable-pnm --disable-pcx --without-libjpeg \
+	--without-libmspack --without-gnomeprint --disable-webkit \
+	--disable-help --disable-mshtmlhelp --disable-htmlhelp \
+	--disable-protocols --disable-protocol_http --disable-protocol_ftp \
+	--disable-protocol_file --disable-joystick --disable-aui --disable-xrc
+    make
+    make install
 
-** or install compiled versions from: http://www.zlatkovic.com/pub/libxml/
+* Compile webchanges:
+    ./configure --prefix=$MINGWPREFIX --enable-gui
+    make
