@@ -58,20 +58,20 @@ WcResultGrid *resGrid = NULL;
 WcTreeCtrl *treeCtrl = NULL;
 
 BEGIN_EVENT_TABLE(WcTreeCtrl, wxTreeCtrl)
-EVT_TREE_SEL_CHANGED(ID_TREECTRL, WcTreeCtrl::OnSelChanged)
+  EVT_TREE_SEL_CHANGED(ID_TREECTRL, WcTreeCtrl::OnSelChanged)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE (WcResultGrid, wxGrid)
-EVT_SIZE (WcResultGrid::OnSize)
+  EVT_SIZE (WcResultGrid::OnSize)
 END_EVENT_TABLE ()
 
 BEGIN_EVENT_TABLE (WcLogCtrl, wxListCtrl)
-EVT_SIZE (WcLogCtrl::OnSize)
+  EVT_SIZE (WcLogCtrl::OnSize)
 END_EVENT_TABLE ()
 
 BEGIN_EVENT_TABLE (WcFrame, wxFrame)
-EVT_MENU (ID_LIST_QUIT, WcFrame::OnQuit)
-EVT_MENU (ID_LIST_ABOUT, WcFrame::OnAbout)
+  EVT_MENU (ID_LIST_QUIT, WcFrame::OnQuit)
+  EVT_MENU (ID_LIST_ABOUT, WcFrame::OnAbout)
 END_EVENT_TABLE ()
 
 IMPLEMENT_APP (WcApp)
@@ -178,37 +178,37 @@ WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
     {
     case XPATH_NODESET:
       for (int i = 0; i < 2; ++i)
-	{
-	  const xmlNodeSetPtr nodes = (i == 0 ? oldres : curres)->nodesetval;
-	  wxArrayString& strings = (i == 0 ? old : cur);
-	  /* print nodes in node-set sequentially */
-	  for (int j = 0; j < (nodes ? nodes->nodeNr : 0); ++j)
-	    {
+        {
+          const xmlNodeSetPtr nodes = (i == 0 ? oldres : curres)->nodesetval;
+          wxArrayString& strings = (i == 0 ? old : cur);
+          /* print nodes in node-set sequentially */
+          for (int j = 0; j < (nodes ? nodes->nodeNr : 0); ++j)
+            {
               wxString str, val;
-	      xmlNodePtr cur = nodes->nodeTab[j];
-	      switch (cur->type)
-		{
-		case XML_ATTRIBUTE_NODE:
+              xmlNodePtr cur = nodes->nodeTab[j];
+              switch (cur->type)
+                {
+                case XML_ATTRIBUTE_NODE:
                   str = wxString((char *) cur->name, wxConvUTF8);
                   val = wxString((char *) cur->children->content, wxConvUTF8);
                   strings.Add (_("(ATTR): ") + str + _(" = \"") + val + _("\""));
-		  break;
-		case XML_COMMENT_NODE:
+                  break;
+                case XML_COMMENT_NODE:
                   str = wxString((char *) cur->content, wxConvUTF8);
                   strings.Add (_ ("(COMM): ") + str);
-		  break;
-		case XML_ELEMENT_NODE:
+                  break;
+                case XML_ELEMENT_NODE:
                   str = wxString((char *) cur->name, wxConvUTF8);
                   strings.Add (_ ("(ELEM): ") + str);
-		  break;
-		case XML_TEXT_NODE:
+                  break;
+                case XML_TEXT_NODE:
                   str = wxString((char *) cur->content, wxConvUTF8);
                   strings.Add (_ ("(TEXT): ") + str);
-		default:
-		  break;
-		}
-	    }
-	}
+                default:
+                  break;
+                }
+            }
+        }
       break;
     case XPATH_STRING:
       old.Add (wxString ((char *) oldres->stringval, wxConvUTF8));
@@ -235,20 +235,20 @@ WcTreeCtrl::WcTreeCtrl (wxWindow* parent, wxWindowID id) : wxTreeCtrl (parent, i
 wxTreeItemId
 WcTreeCtrl::AppendMonfile (const monfileptr mf)
 {
-    const xmlChar* name = monfile_get_name(mf);
-    wxString wxname = wxString ((char *) name, wxConvUTF8);
-    wxTreeItemId node = AppendItem (GetRootItem (), wxname);
-    SetItemData (node, NULL);
-    return node;
+  const xmlChar* name = monfile_get_name(mf);
+  wxString wxname = wxString ((char *) name, wxConvUTF8);
+  wxTreeItemId node = AppendItem (GetRootItem (), wxname);
+  SetItemData (node, NULL);
+  return node;
 }
 
 wxTreeItemId
 WcTreeCtrl::AppendMonitor (const wxTreeItemId& parent, const monitorptr m, const metafileptr mef)
 {
-    const xmlChar* name = monitor_get_name(m);
-    wxTreeItemId node = AppendItem (parent, wxString ((char *) name, wxConvUTF8));
-    SetItemData (node, new WcTreeItemData(m, mef));
-    return node;
+  const xmlChar* name = monitor_get_name(m);
+  wxTreeItemId node = AppendItem (parent, wxString ((char *) name, wxConvUTF8));
+  SetItemData (node, new WcTreeItemData(m, mef));
+  return node;
 }
 
 void
@@ -256,18 +256,18 @@ WcTreeCtrl::OnSelChanged(wxTreeEvent &event)
 {
   const WcTreeItemData* data = (WcTreeItemData*) GetItemData (event.GetItem());
   if (data == NULL)
-  {
-    resGrid->BeginBatch();
-    resGrid->SetColLabelValue (0, _ ("Old Result"));
-    resGrid->DeleteRows (0, resGrid->GetNumberRows ());
-    resGrid->EndBatch();
-    return;
-  }
+    {
+      resGrid->BeginBatch();
+      resGrid->SetColLabelValue (0, _ ("Old Result"));
+      resGrid->DeleteRows (0, resGrid->GetNumberRows ());
+      resGrid->EndBatch();
+      return;
+    }
   const wxArrayString& cur = data->GetCurArray();
   const wxArrayString& old = data->GetOldArray();
   unsigned int rows = old.GetCount();
   if (cur.GetCount() > rows)
-      rows = cur.GetCount();
+    rows = cur.GetCount();
 
   resGrid->BeginBatch();
   resGrid->SetColLabelValue (0, wxString::Format(_ ("Old Result (%s)"), data->GetLastCheck ().c_str ()));
@@ -315,7 +315,7 @@ WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id,
 {
   // Use typewriter/teletype font
   wxFont ttFont (wxNORMAL_FONT->GetPointSize (), wxFONTFAMILY_TELETYPE,
-          wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                 wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   SetFont (ttFont);
   // Create single column
   wxListItem itemCol;
@@ -474,7 +474,7 @@ WcFrame::doCheck (monfileptr mf, int update)
                   outputf (LVL_WARN, "%s (%s):\n", name, mfname);
                   indent (LVL_WARN);
                   if (!mf_node.IsOk ())
-                      mf_node = treeCtrl->AppendMonfile (mf);
+                    mf_node = treeCtrl->AppendMonfile (mf);
                   treeCtrl->AppendMonitor (mf_node, m, mef);
                   outputf (LVL_WARN, "see above.\n");
                   outdent (LVL_WARN);
@@ -589,28 +589,28 @@ const wxChar*
 WcApp::usage (void)
 {
   return wxT ("Usage: webchanges COMMAND [OPTION]... FILE...\n\n" \
-  "Commands:\n" \
-  "  -i  initialize monitor file, download into cache\n" \
-  "  -c  check monitor file for changes\n" \
-  "  -u  check monitor file for changes and update cache\n" \
-  "  -r  remove files associated with monitor file from cache\n" \
-  "  -h  display this help and exit\n" \
-  "  -V  display version & copyright information and exit\n\n" \
-  "Options:\n" \
-  "  -f  force checking/updating of all monitors now\n" \
-  "  -b  set base directory\n" \
-  "  -q  quiet mode, suppress most stdout messages\n" \
-  "  -v  verbose mode, repeat to increase stdout messages");
+              "Commands:\n" \
+              "  -i  initialize monitor file, download into cache\n" \
+              "  -c  check monitor file for changes\n" \
+              "  -u  check monitor file for changes and update cache\n" \
+              "  -r  remove files associated with monitor file from cache\n" \
+              "  -h  display this help and exit\n" \
+              "  -V  display version & copyright information and exit\n\n" \
+              "Options:\n" \
+              "  -f  force checking/updating of all monitors now\n" \
+              "  -b  set base directory\n" \
+              "  -q  quiet mode, suppress most stdout messages\n" \
+              "  -v  verbose mode, repeat to increase stdout messages");
 }
 
 const wxChar*
 WcApp::version (void)
 {
   return wxT ("webchanges version %s\n" VERSION \
-  "Copyright (C) 2006, 2007 Marius Konitzer\n" \
-  "This is free software; see the source for copying conditions.  " \
-  "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS " \
-  "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
+              "Copyright (C) 2006, 2007 Marius Konitzer\n" \
+              "This is free software; see the source for copying conditions.  " \
+              "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS " \
+              "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
 }
 
 bool
@@ -629,7 +629,8 @@ void
 WcApp::OnInitCmdLine (wxCmdLineParser &parser)
 {
   wxApp::OnInitCmdLine (parser);
-  static const wxCmdLineEntryDesc cmdLineDesc[] ={
+  static const wxCmdLineEntryDesc cmdLineDesc[] =
+  {
     { wxCMD_LINE_SWITCH, _ ("i"), NULL, NULL},
     { wxCMD_LINE_SWITCH, _ ("c"), NULL, NULL},
     { wxCMD_LINE_SWITCH, _ ("u"), NULL, NULL},
@@ -802,7 +803,7 @@ WcApp::OnInit ()
 
   /* Exit if nothing has happened. */
   if (logCtrl->GetItemCount () == 0 && treeCtrl->GetCount () == 1)
-      return false;
+    return false;
 
   /* Display main window. */
   frame->finalize (count);

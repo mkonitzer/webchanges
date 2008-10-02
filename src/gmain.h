@@ -35,98 +35,110 @@
  * WcTreeItemData - associate tree item with its underlying monitor
  */
 class WcTreeItemData : public wxTreeItemData
-{
-public:
-  WcTreeItemData (const monitorptr m, const metafileptr mef);
-  const wxString& GetName () const { return name; }
-  const wxString& GetLastCheck () const { return lastchk; }
-  const wxArrayString& GetOldArray () const { return old; }
-  const wxArrayString& GetCurArray () const { return cur; }
-private:
-  wxString name;
-  wxString lastchk;
-  wxArrayString old;
-  wxArrayString cur;
-};
+  {
+  public:
+    WcTreeItemData (const monitorptr m, const metafileptr mef);
+    const wxString& GetName () const
+      {
+        return name;
+      }
+    const wxString& GetLastCheck () const
+      {
+        return lastchk;
+      }
+    const wxArrayString& GetOldArray () const
+      {
+        return old;
+      }
+    const wxArrayString& GetCurArray () const
+      {
+        return cur;
+      }
+  private:
+    wxString name;
+    wxString lastchk;
+    wxArrayString old;
+    wxArrayString cur;
+  };
 
 class WcTreeCtrl : public wxTreeCtrl
-{
-public:
+  {
+  public:
     WcTreeCtrl (wxWindow* parent, wxWindowID id);
     wxTreeItemId AppendMonfile (const monfileptr mf);
     wxTreeItemId AppendMonitor (const wxTreeItemId& parent, const monitorptr m, const metafileptr mef);
-private:
-  void OnSelChanged(wxTreeEvent &event);
-  DECLARE_EVENT_TABLE ()
-};
+  private:
+    void OnSelChanged(wxTreeEvent &event);
+    DECLARE_EVENT_TABLE ()
+  };
 
 class WcResultGrid : public wxGrid
-{
-public:
-  WcResultGrid (wxWindow* parent, wxWindowID id);
-private:
-  void OnSize(wxSizeEvent& event);
-  DECLARE_EVENT_TABLE ()
-};
+  {
+  public:
+    WcResultGrid (wxWindow* parent, wxWindowID id);
+  private:
+    void OnSize(wxSizeEvent& event);
+    DECLARE_EVENT_TABLE ()
+  };
 
 class WcLogCtrl : public wxListCtrl
-{
-public:
-  WcLogCtrl (wxWindow* parent, wxWindowID id);
-private:
-  void OnSize(wxSizeEvent& event);
-  DECLARE_EVENT_TABLE ()
-};
+  {
+  public:
+    WcLogCtrl (wxWindow* parent, wxWindowID id);
+  private:
+    void OnSize(wxSizeEvent& event);
+    DECLARE_EVENT_TABLE ()
+  };
 
 /*
  * WcFrame - main window
  */
 class WcFrame : public wxFrame
-{
-public:
-  WcFrame (const wxChar *title);
-  int doInit (monfileptr mf);
-  int doCheck (monfileptr mf, int update);
-  int doRemove (monfileptr mf);
-  void finalize (int count);
+  {
+  public:
+    WcFrame (const wxChar *title);
+    int doInit (monfileptr mf);
+    int doCheck (monfileptr mf, int update);
+    int doRemove (monfileptr mf);
+    void finalize (int count);
 
-protected:
-  void OnQuit (wxCommandEvent& event);
-  void OnAbout (wxCommandEvent& event);
+  protected:
+    void OnQuit (wxCommandEvent& event);
+    void OnAbout (wxCommandEvent& event);
 
-private:
-  DECLARE_NO_COPY_CLASS (WcFrame)
-  DECLARE_EVENT_TABLE ()
-};
+  private:
+    DECLARE_NO_COPY_CLASS (WcFrame)
+    DECLARE_EVENT_TABLE ()
+  };
 
 /*
  * WcApp - gwebchanges application
  */
 class WcApp : public wxApp
-{
-public:
-  WcApp ();
-  ~WcApp ();
-  virtual void OnInitCmdLine (wxCmdLineParser &parser);
-  virtual bool OnCmdLineError (wxCmdLineParser& parser);
-  virtual bool OnCmdLineHelp (wxCmdLineParser& parser);
-  virtual bool OnCmdLineParsed (wxCmdLineParser& parser);
-  virtual bool OnInit ();
-
-private:
-  DECLARE_NO_COPY_CLASS (WcApp)
-  enum action
   {
-    NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY
-  };
-  int action;
-  char * userdir;
-  basedirptr basedir;
-  xmlListPtr filelist;
+  public:
+    WcApp ();
+    ~WcApp ();
+    virtual void OnInitCmdLine (wxCmdLineParser &parser);
+    virtual bool OnCmdLineError (wxCmdLineParser& parser);
+    virtual bool OnCmdLineHelp (wxCmdLineParser& parser);
+    virtual bool OnCmdLineParsed (wxCmdLineParser& parser);
+    virtual bool OnInit ();
 
-  const wxChar* usage (void);
-  const wxChar* version (void);
-  bool errexit (const wxChar *fmt, ...);
-};
+  private:
+    DECLARE_NO_COPY_CLASS (WcApp)
+    enum action
+    {
+      NONE, CHECK, INIT, UPDATE, REMOVE, TOOMANY
+    };
+    int action;
+    char * userdir;
+    basedirptr basedir;
+    xmlListPtr filelist;
+
+    const wxChar* usage (void);
+    const wxChar* version (void);
+    bool errexit (const wxChar *fmt, ...);
+  };
 
 #endif /* __WC_GMAIN_H__ */

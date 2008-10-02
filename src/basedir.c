@@ -50,7 +50,7 @@ dir_join (const char *cur, const char *add)
   char *joined = NULL;
   if (cur == NULL || add == NULL)
     return NULL;
-  joined = (char*) malloc (strlen (cur) + 1 + strlen (add) + 1);
+  joined = (char *) malloc (strlen (cur) + 1 + strlen (add) + 1);
   strcpy (joined, cur);
 #ifdef _WIN32
   strcat (joined, "\\");
@@ -241,7 +241,8 @@ dir_safe_create (const char *dirname)
 {
   if (dir_exists (dirname) == 0)
     {
-      outputf (LVL_INFO, "[basedir] Directory '%s' does not exist, creating.\n",
+      outputf (LVL_INFO,
+	       "[basedir] Directory '%s' does not exist, creating.\n",
 	       dirname);
 #ifndef _WIN32
       if (mkdir (dirname, 0755) != 0)

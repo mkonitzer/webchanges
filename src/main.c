@@ -254,7 +254,8 @@ do_check (monfileptr mf, int update)
 			  lastvp = vp;
 			}
 		      else
-			outputf (LVL_DEBUG, "Skipping update, already done\n");
+			outputf (LVL_DEBUG,
+				 "Skipping update, already done\n");
 		    }
 		  count++;
 		}
