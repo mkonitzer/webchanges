@@ -33,11 +33,11 @@ enum retvalue
 
 enum outputlvl
 {
-  ERROR = -99,
-  WARN = 0,
-  NOTICE = 1,
-  INFO = 2,
-  DEBUG = 3
+  LVL_ERR = -99,
+  LVL_WARN = 0,
+  LVL_NOTICE = 1,
+  LVL_INFO = 2,
+  LVL_DEBUG = 3
 };
 
 void outputf (int lvl, const char *fmt, ...);

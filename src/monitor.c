@@ -56,7 +56,7 @@ evalxpath (xmlDocPtr doc, const xmlChar * expr)
   ctx = xmlXPathNewContext (doc);
   if (ctx == NULL)
     {
-      outputf (WARN, "[monitor] Could not create xpath context!\n");
+      outputf (LVL_WARN, "[monitor] Could not create xpath context!\n");
       return NULL;
     }
   /* evaluate xpath expression */
@@ -64,7 +64,7 @@ evalxpath (xmlDocPtr doc, const xmlChar * expr)
   xmlXPathFreeContext (ctx);
   if (obj == NULL)
     {
-      outputf (WARN, "[monitor] Could not evaluate %s!\n", expr);
+      outputf (LVL_WARN, "[monitor] Could not evaluate %s!\n", expr);
       return NULL;
     }
   return obj;
@@ -81,7 +81,7 @@ monitor_new (vpairptr vp, const xmlChar * name)
   m = (monitorptr) xmlMalloc (sizeof (monitor));
   if (m == NULL)
     {
-      outputf (ERROR, "[monitor] Out of memory\n");
+      outputf (LVL_ERR, "[monitor] Out of memory\n");
       return NULL;
     }
   memset (m, 0, sizeof (monitor));
@@ -103,27 +103,27 @@ monitor_evaluate (monitorptr m)
   /* parse corresponding vpair */
   if (vpair_parse (m->vp) != 0)
     {
-      outputf (NOTICE, "[monitor] Could not parse corresponding vpair\n");
+      outputf (LVL_NOTICE, "[monitor] Could not parse corresponding vpair\n");
       return RET_ERROR;
     }
   /* old xpath result */
   m->oldres = evalxpath (vpair_get_old_doc (m->vp), m->xpath);
   if (m->oldres == NULL)
     {
-      outputf (WARN, "[monitor] Evaluation on old document failed!\n");
+      outputf (LVL_WARN, "[monitor] Evaluation on old document failed!\n");
       return RET_ERROR;
     }
   /* current xpath result */
   m->curres = evalxpath (vpair_get_cur_doc (m->vp), m->xpath);
   if (m->curres == NULL)
     {
-      outputf (WARN, "[monitor] Evaluation on new document failed!\n");
+      outputf (LVL_WARN, "[monitor] Evaluation on new document failed!\n");
       return RET_ERROR;
     }
   /* are both results of same type */
   if (m->oldres->type != m->curres->type)
     {
-      outputf (WARN,
+      outputf (LVL_WARN,
 	       "[monitor] Evaluation produced results of different type!\n");
       return RET_ERROR;
     }
@@ -239,7 +239,7 @@ monitor_triggered (const monitorptr m)
       /* one should never get here */
       return RET_ERROR;
     }
-  outputf (DEBUG, "[monitor] Comparing %.2lf to %.2lf\n", v1, v2);
+  outputf (LVL_DEBUG, "[monitor] Comparing %.2lf to %.2lf\n", v1, v2);
   /* compare both values */
   if (m->tr_type == TR_CHANGED)
     /* n[%] "changed" */
@@ -289,7 +289,7 @@ monitor_set_interval (monitorptr m, const xmlChar * ival)
   /* parse interval @ival */
   if (sscanf ((char *) ival, "%lu %1c", &val, &unit) != 2)
     {
-      outputf (WARN, "[monitor] Invalid interval %s\n", ival);
+      outputf (LVL_WARN, "[monitor] Invalid interval %s\n", ival);
       return RET_ERROR;
     }
   /* convert @val to seconds */
@@ -305,10 +305,10 @@ monitor_set_interval (monitorptr m, const xmlChar * ival)
       m->ival = val;
       break;
     default:
-      outputf (WARN, "[monitor] Invalid interval unit %c\n", unit);
+      outputf (LVL_WARN, "[monitor] Invalid interval unit %c\n", unit);
       return RET_ERROR;
     }
-  outputf (DEBUG, "[monitor] Setting interval %s = %lus\n", ival, m->ival);
+  outputf (LVL_DEBUG, "[monitor] Setting interval %s = %lus\n", ival, m->ival);
   return RET_OK;
 }
 
@@ -327,7 +327,7 @@ monitor_set_trigger (monitorptr m, const xmlChar * trigger)
   else if (sscanf ((char *) trigger, "%8s", type) != 1)
     {
       /* none of ("changed"|"more"|"less") */
-      outputf (WARN, "[monitor] Invalid trigger %s\n", trigger);
+      outputf (LVL_WARN, "[monitor] Invalid trigger %s\n", trigger);
       return RET_ERROR;
     }
   /* get trigger type */
@@ -339,13 +339,13 @@ monitor_set_trigger (monitorptr m, const xmlChar * trigger)
     m->tr_type = TR_LESS;
   else
     {
-      outputf (WARN, "[monitor] Invalid trigger type %s\n", trigger);
+      outputf (LVL_WARN, "[monitor] Invalid trigger type %s\n", trigger);
       return RET_ERROR;
     }
   /* store trigger values */
   m->tr_prc = prc;
   m->tr_add = add;
-  outputf (DEBUG, "[monitor] Setting trigger %s (%d,%.2lf,%.2lf)\n",
+  outputf (LVL_DEBUG, "[monitor] Setting trigger %s (%d,%.2lf,%.2lf)\n",
 	   trigger, m->tr_type, m->tr_prc, m->tr_add);
   return RET_OK;
 }
