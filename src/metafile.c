@@ -114,8 +114,9 @@ metafile_read (metafileptr mef)
       mm->seen = 0;
       mm->lastchk = chk;
       xmlHashAddEntry (mef->monitors, name, mm);
-      outputf (LVL_DEBUG, "[metafile] Got metadata for %s. Last check was on %s",
-	       name, ctime (&chk));
+      outputf (LVL_DEBUG,
+	       "[metafile] Got metadata for %s. Last check was on %s", name,
+	       ctime (&chk));
     }
   fclose (f);
   return RET_OK;

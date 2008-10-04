@@ -308,7 +308,8 @@ monitor_set_interval (monitorptr m, const xmlChar * ival)
       outputf (LVL_WARN, "[monitor] Invalid interval unit %c\n", unit);
       return RET_ERROR;
     }
-  outputf (LVL_DEBUG, "[monitor] Setting interval %s = %lus\n", ival, m->ival);
+  outputf (LVL_DEBUG, "[monitor] Setting interval %s = %lus\n", ival,
+	   m->ival);
   return RET_OK;
 }
 

@@ -11,7 +11,7 @@ AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_LANG_C
+AC_PROG_CXX	    # FIXME: check only if GUI requested
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -21,7 +21,7 @@ AC_C_BIGENDIAN
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(getopt.h errno.h string.h time.h sys/stat.h)
+AC_CHECK_HEADERS(getopt.h)
 
 dnl Checks for library functions.
 
@@ -31,5 +31,24 @@ AM_PATH_XML2(2.6.0,,AC_MSG_ERROR([*** libxml2 and libxml2-dev >=2.6.0 are requir
 dnl [OPTION] SHOW_HTML_ERRORS
 AC_ARG_ENABLE(htmlerr, AC_HELP_STRING([--enable-html-errors], [Show HTML-errors]), if test $enableval = yes; then AC_DEFINE([SHOW_HTML_ERRORS], [], [Show HTML-errors]) fi)
 
+dnl [OPTION] Check, if GUI has to be compiled
+AC_ARG_ENABLE(gui, AC_HELP_STRING([--enable-gui], [Build with GUI]),
+    [ if test "${enableval}" = yes; then
+	gui=1
+	AM_OPTIONS_WXCONFIG
+	AM_PATH_WXCONFIG(2.4.0, wxwidgets=1)
+	if test "${wxwidgets}" != 1; then
+	    AC_MSG_ERROR([
+	wxWidgets must be installed on your system
+	but wx-config script couldn't be found.
+
+	Please check that wx-config is in path, the directory
+	where wxWidgets libraries are installed (returned by
+	'wx-config --libs' command) is in LD_LIBRARY_PATH or
+	equivalent variable and wxWidgets version is 2.4.0 or above.
+	    ])
+	fi
+    fi ])
+AM_CONDITIONAL(COMPILE_GUI, test "${gui}" = 1)
 
 AC_OUTPUT
