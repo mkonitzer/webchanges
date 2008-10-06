@@ -2,6 +2,7 @@
 /* webchanges -- monitor parts of webpages for changes in content
 
    Copyright (C) 2006, 2007, 2008  Marius Konitzer
+   This file is part of webchanges.
 
    webchanges is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -410,13 +411,13 @@ main (int argc, char **argv)
 	}
     }
 
-  /* do we have a unique command? */
+  /* Do we have a unique command? */
   if (action == NONE)
     return errexit ("No command given, exiting.");
   if (action == TOOMANY)
     return errexit ("More than one command given, exiting.");
 
-  /* Setup basedir */
+  /* Setup basedir. */
   basedir = basedir_open (userdir);
   if (userdir != NULL)
     {
@@ -503,7 +504,9 @@ main (int argc, char **argv)
       xmlListPopFront (filelist);
     }
   basedir_close (basedir);
+  basedir = NULL;
   xmlListDelete (filelist);
+  filelist = NULL;
   xmlCleanupParser ();
   return count;
 }

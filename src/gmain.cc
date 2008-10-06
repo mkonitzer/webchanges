@@ -18,6 +18,9 @@
    along with webchanges; if not, write to the Free Software Foundation,
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <wx/wx.h>
 #include <wx/treectrl.h>
 #include <wx/listctrl.h>
@@ -29,15 +32,14 @@
 #include "monfile.h"
 #include "metafile.h"
 #include "monitor.h"
-#include "global.h"
 #include "basedir.h"
+#include "global.h"
 #include "gmain.h"
 #if !defined(__WXMSW__)
 #include "gmain16.xpm"
 #include "gmain32.xpm"
 #include "gmain48.xpm"
 #endif
-#include "config.h"
 
 /*
  * Translate wxString into (char*) for use in system calls.
@@ -59,6 +61,10 @@ WcLogCtrl *logCtrl = NULL;
 WcResultGrid *resGrid = NULL;
 WcTreeCtrl *treeCtrl = NULL;
 
+static int lvl_verbos = LVL_NOTICE;	/* level for stdout-verbosity */
+static int lvl_indent = 0;	/* level for indentation */
+static int force = 0;		/* force checking */
+
 BEGIN_EVENT_TABLE(WcTreeCtrl, wxTreeCtrl)
   EVT_TREE_SEL_CHANGED(ID_TREECTRL, WcTreeCtrl::OnSelChanged)
 END_EVENT_TABLE()
@@ -77,11 +83,6 @@ BEGIN_EVENT_TABLE (WcFrame, wxFrame)
 END_EVENT_TABLE ()
 
 IMPLEMENT_APP (WcApp)
-
-
-int lvl_verbos = LVL_NOTICE; /* level for stdout-verbosity */
-int lvl_indent = 0; /* level for indentation */
-bool force = false; /* force checking */
 
 /*
  * callback output-function
@@ -154,9 +155,10 @@ xml_errfunc (void *ctx, const char *msg, ...)
 static void
 xml_strlist_deallocator (xmlLinkPtr lk)
 {
+  void *data = NULL;
   if (lk == NULL)
     return;
-  void *data = xmlLinkGetData (lk);
+  data = xmlLinkGetData (lk);
   if (data != NULL)
     free (data);
 }
@@ -166,6 +168,7 @@ xml_strlist_deallocator (xmlLinkPtr lk)
  */
 WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
 {
+  int i, j;
   name = wxString ((char*) monitor_get_name(m), wxConvUTF8);
   lastchk = wxDateTime (monitor_get_last_check(mef, m)).Format ();
 
@@ -179,38 +182,38 @@ WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
   switch (oldres->type)
     {
     case XPATH_NODESET:
-      for (int i = 0; i < 2; ++i)
-        {
-          const xmlNodeSetPtr nodes = (i == 0 ? oldres : curres)->nodesetval;
-          wxArrayString& strings = (i == 0 ? old : cur);
-          /* print nodes in node-set sequentially */
-          for (int j = 0; j < (nodes ? nodes->nodeNr : 0); ++j)
-            {
-              wxString str, val;
-              xmlNodePtr cur = nodes->nodeTab[j];
-              switch (cur->type)
-                {
-                case XML_ATTRIBUTE_NODE:
-                  str = wxString((char *) cur->name, wxConvUTF8);
-                  val = wxString((char *) cur->children->content, wxConvUTF8);
-                  strings.Add (_("(ATTR): ") + str + _(" = \"") + val + _("\""));
-                  break;
-                case XML_COMMENT_NODE:
-                  str = wxString((char *) cur->content, wxConvUTF8);
-                  strings.Add (_ ("(COMM): ") + str);
-                  break;
-                case XML_ELEMENT_NODE:
-                  str = wxString((char *) cur->name, wxConvUTF8);
-                  strings.Add (_ ("(ELEM): ") + str);
-                  break;
-                case XML_TEXT_NODE:
-                  str = wxString((char *) cur->content, wxConvUTF8);
-                  strings.Add (_ ("(TEXT): ") + str);
-                default:
-                  break;
-                }
-            }
-        }
+      for (i = 0; i < 2; ++i)
+	{
+	  const xmlNodeSetPtr nodes = (i == 0 ? oldres : curres)->nodesetval;
+	  wxArrayString& strings = (i == 0 ? old : cur);
+	  /* print nodes in node-set sequentially */
+	  for (j = 0; j < (nodes ? nodes->nodeNr : 0); ++j)
+	    {
+	      wxString str, val;
+	      xmlNodePtr cur = nodes->nodeTab[j];
+	      switch (cur->type)
+		{
+		case XML_ATTRIBUTE_NODE:
+		  str = wxString((char *) cur->name, wxConvUTF8);
+		  val = wxString((char *) cur->children->content, wxConvUTF8);
+		  strings.Add (_("(ATTR): ") + str + _(" = \"") + val + _("\""));
+		  break;
+		case XML_COMMENT_NODE:
+		  str = wxString((char *) cur->content, wxConvUTF8);
+		  strings.Add (_ ("(COMM): ") + str);
+		  break;
+		case XML_ELEMENT_NODE:
+		  str = wxString((char *) cur->name, wxConvUTF8);
+		  strings.Add (_ ("(ELEM): ") + str);
+		  break;
+		case XML_TEXT_NODE:
+		  str = wxString((char *) cur->content, wxConvUTF8);
+		  strings.Add (_ ("(TEXT): ") + str);
+		default:
+		  break;
+		}
+	    }
+	}
       break;
     case XPATH_STRING:
       old.Add (wxString ((char *) oldres->stringval, wxConvUTF8));
@@ -317,7 +320,7 @@ WcLogCtrl::WcLogCtrl (wxWindow* parent, wxWindowID id) : wxListCtrl (parent, id,
 {
   // Use typewriter/teletype font
   wxFont ttFont (wxNORMAL_FONT->GetPointSize (), wxFONTFAMILY_TELETYPE,
-                 wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+		 wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   SetFont (ttFont);
   // Create single column
   wxListItem itemCol;
@@ -403,12 +406,12 @@ void
 WcFrame::OnAbout (wxCommandEvent& WXUNUSED (event))
 {
   wxMessageBox (_ ("gwebchanges version " VERSION "%s\n"
-                   "Graphical user interface for webchanges\n\n"
-                   "Copyright (C) 2007, 2008 Marius Konitzer\n\n"
-                   "This is free software; see the source for copying conditions. "
-                   "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR "
-                   "A PARTICULAR PURPOSE, to the extent permitted by law."),
-                _ ("About gwebchanges"), wxOK | wxICON_INFORMATION);
+		   "Graphical user interface for webchanges\n\n"
+		   "Copyright (C) 2007, 2008 Marius Konitzer\n\n"
+		   "This is free software; see the source for copying conditions. "
+		   "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR "
+		   "A PARTICULAR PURPOSE, to the extent permitted by law."),
+		_ ("About gwebchanges"), wxOK | wxICON_INFORMATION);
 }
 
 /*
@@ -425,7 +428,7 @@ WcFrame::doInit (monfileptr mf)
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
-        break;
+	break;
       outputf (LVL_NOTICE, "Downloading %s\n", vpair_get_url (vp));
       indent (LVL_NOTICE);
       outputf (LVL_NOTICE, "=> %s\n", vpair_get_cache (vp));
@@ -461,59 +464,60 @@ WcFrame::doCheck (monfileptr mf, int update)
       time_t nextchk;
       const xmlChar *name;
       if (ret == RET_EOF)
-        break;
+	break;
       /* we obtained a monitor @m */
       name = monitor_get_name (m);
       nextchk = monitor_get_next_check (mef, m);
       if (force != 0 || time (NULL) >= nextchk)
-        {
-          /* checking of monitor @m is necessary */
-          outputf (LVL_NOTICE, "Checking %s now:\n", name);
-          indent (LVL_NOTICE);
-          if ((ret = monitor_evaluate (m)) == RET_OK)
-            {
-              /* monitor @m was evaluable */
-              if (monitor_triggered (m) != 0)
-                {
-                  /* monitor @m reported a change */
-                  outputf (LVL_WARN, "%s (%s):\n", name, mfname);
-                  indent (LVL_WARN);
-                  if (!mf_node.IsOk ())
-                    mf_node = treeCtrl->AppendMonfile (mf);
-                  treeCtrl->AppendMonitor (mf_node, m, mef);
-                  outputf (LVL_WARN, "see above.\n");
-                  outdent (LVL_WARN);
-                  /* update cache file, if requested */
-                  if (update != 0)
-                    {
-                      vpairptr vp = monitor_get_vpair (m);
-                      if (lastvp != vp)
-                        {
-                          /* update of @vp necessary */
-                          outputf (LVL_NOTICE, "Updating %s\n",
-                                   vpair_get_cache (vp));
-                          indent (LVL_NOTICE);
-                          vpair_download (vp);
-                          outdent (LVL_NOTICE);
-                          lastvp = vp;
-                        }
-                      else
-                        outputf (LVL_DEBUG, "Skipping update, already done\n");
-                    }
-                  count++;
-                }
-              else
-                outputf (LVL_NOTICE, "%s NOT triggered.\n", name);
-              monitor_set_last_check (mef, m, time (NULL));
-            }
-          else
-            outputf (LVL_WARN, "Skipping %s (%s), not evaluable.\n", name,
-                     mfname);
-          outdent (LVL_NOTICE);
-        }
+	{
+	  /* checking of monitor @m is necessary */
+	  outputf (LVL_NOTICE, "Checking %s now:\n", name);
+	  indent (LVL_NOTICE);
+	  if ((ret = monitor_evaluate (m)) == RET_OK)
+	    {
+	      /* monitor @m was evaluable */
+	      if (monitor_triggered (m) != 0)
+		{
+		  /* monitor @m reported a change */
+		  outputf (LVL_WARN, "%s (%s):\n", name, mfname);
+		  indent (LVL_WARN);
+		  if (!mf_node.IsOk ())
+		    mf_node = treeCtrl->AppendMonfile (mf);
+		  treeCtrl->AppendMonitor (mf_node, m, mef);
+		  outputf (LVL_WARN, "see above.\n");
+		  outdent (LVL_WARN);
+		  /* update cache file, if requested */
+		  if (update != 0)
+		    {
+		      vpairptr vp = monitor_get_vpair (m);
+		      if (lastvp != vp)
+			{
+			  /* update of @vp necessary */
+			  outputf (LVL_NOTICE, "Updating %s\n",
+				   vpair_get_cache (vp));
+			  indent (LVL_NOTICE);
+			  vpair_download (vp);
+			  outdent (LVL_NOTICE);
+			  lastvp = vp;
+			}
+		      else
+			outputf (LVL_DEBUG,
+				 "Skipping update, already done\n");
+		    }
+		  count++;
+		}
+	      else
+		outputf (LVL_NOTICE, "%s NOT triggered.\n", name);
+	      monitor_set_last_check (mef, m, time (NULL));
+	    }
+	  else
+	    outputf (LVL_WARN, "Skipping %s (%s), not evaluable.\n", name,
+		     mfname);
+	  outdent (LVL_NOTICE);
+	}
       else
-        outputf (LVL_NOTICE, "Skipping %s, next checking %s", name,
-                 ctime (&nextchk));
+	outputf (LVL_NOTICE, "Skipping %s, next checking %s", name,
+		 ctime (&nextchk));
       monitor_free (m);
     }
   /* close metadata file @mef */
@@ -538,7 +542,7 @@ WcFrame::doRemove (monfileptr mf)
   while ((ret = monfile_get_next_vpair (mf, &vp)) != RET_EOF)
     {
       if (ret == RET_ERROR)
-        break;
+	break;
       outputf (LVL_NOTICE, "Removing %s from cache\n", vpair_get_url (vp));
       indent (LVL_NOTICE);
       vpair_remove (vp);
@@ -594,28 +598,28 @@ const wxChar*
 WcApp::usage (void)
 {
   return wxT ("Usage: gwebchanges COMMAND [OPTION]... FILE...\n\n"
-              "Commands:\n"
-              "  -i  initialize monitor file, download into cache\n"
-              "  -c  check monitor file for changes\n"
-              "  -u  check monitor file for changes and update cache\n"
-              "  -r  remove files associated with monitor file from cache\n"
-              "  -h  display this help and exit\n"
-              "  -V  display version & copyright information and exit\n\n"
-              "Options:\n"
-              "  -f  force checking/updating of all monitors now\n"
-              "  -b  set base directory\n"
-              "  -q  quiet mode, suppress most stdout messages\n"
-              "  -v  verbose mode, repeat to increase stdout messages");
+	      "Commands:\n"
+	      "  -i  initialize monitor file, download into cache\n"
+	      "  -c  check monitor file for changes\n"
+	      "  -u  check monitor file for changes and update cache\n"
+	      "  -r  remove files associated with monitor file from cache\n"
+	      "  -h  display this help and exit\n"
+	      "  -V  display version & copyright information and exit\n\n"
+	      "Options:\n"
+	      "  -f  force checking/updating of all monitors now\n"
+	      "  -b  set base directory\n"
+	      "  -q  quiet mode, suppress most stdout messages\n"
+	      "  -v  verbose mode, repeat to increase stdout messages");
 }
 
 const wxChar*
 WcApp::version (void)
 {
   return wxT ("gwebchanges version %s" VERSION "\n"
-              "Copyright (C) 2007, 2008 Marius Konitzer\n"
-              "This is free software; see the source for copying conditions.  "
-              "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS "
-              "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
+	      "Copyright (C) 2007, 2008 Marius Konitzer\n"
+	      "This is free software; see the source for copying conditions.  "
+	      "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS "
+	      "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
 }
 
 bool
@@ -742,10 +746,10 @@ WcApp::OnInit ()
   if (basedir_is_prepared (basedir) == 0)
     {
       if (basedir_prepare (basedir) != RET_OK)
-        {
-          basedir_close (basedir);
-          return errexit (_ ("Could not prepare base directory, exiting."));
-        }
+	{
+	  basedir_close (basedir);
+	  return errexit (_ ("Could not prepare base directory, exiting."));
+	}
     }
 
   /* Build file list by taking all monitor files in basedir. */
@@ -766,35 +770,35 @@ WcApp::OnInit ()
       const char *filename;
       /* Get next monitor file from file list */
       lk = xmlListFront (filelist);
-      filename = (const char*) xmlLinkGetData (lk);
+      filename = (const char *) xmlLinkGetData (lk);
 
       /* Open monitor file. */
       mf = monfile_open (filename, basedir);
       if (mf == NULL)
-        {
-          /* Skip this monitor file. */
-          outputf (LVL_ERR, "Error reading monitor file %s\n\n", filename);
-          xmlListPopFront (filelist);
-          count = -1;
-          continue;
-        }
+	{
+	  /* Skip this monitor file. */
+	  outputf (LVL_ERR, "Error reading monitor file %s\n\n", filename);
+	  xmlListPopFront (filelist);
+	  count = -1;
+	  continue;
+	}
       /* Process monitor file. */
       outputf (LVL_INFO, "Processing monitor file %s\n", filename);
       switch (action)
-        {
-        case INIT:
-          ret = frame->doInit (mf);
-          break;
-        case CHECK:
-          ret = frame->doCheck (mf, 0);
-          break;
-        case UPDATE:
-          ret = frame->doCheck (mf, 1);
-          break;
-        case REMOVE:
-          ret = frame->doRemove (mf);
-          break;
-        }
+	{
+	case INIT:
+	  ret = frame->doInit (mf);
+	  break;
+	case CHECK:
+	  ret = frame->doCheck (mf, 0);
+	  break;
+	case UPDATE:
+	  ret = frame->doCheck (mf, 1);
+	  break;
+	case REMOVE:
+	  ret = frame->doRemove (mf);
+	  break;
+	}
       count = (ret < 0 || count < 0 ? -1 : count + ret);
       /* Ready to close monitor file. */
       monfile_close (mf);
