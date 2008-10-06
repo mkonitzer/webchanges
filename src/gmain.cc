@@ -32,9 +32,11 @@
 #include "global.h"
 #include "basedir.h"
 #include "gmain.h"
+#if !defined(__WXMSW__)
 #include "gmain16.xpm"
 #include "gmain32.xpm"
 #include "gmain48.xpm"
+#endif
 #include "config.h"
 
 /*
@@ -343,10 +345,14 @@ WcFrame::WcFrame (const wxChar *title) : wxFrame (NULL, wxID_ANY, title)
     SetSize (wxSize (550, 400));
 
   // main window icon
+  #if !defined(__WXMSW__)
   wxIconBundle iconsMain (wxICON (gmain32));
   iconsMain.AddIcon (wxICON (gmain16));
   iconsMain.AddIcon (wxICON (gmain48));
   SetIcons (iconsMain);
+  #else
+  SetIcon (wxICON (IDI_APPICON));
+  #endif
   // create menu bar
   wxMenu *menuFile = new wxMenu;
   menuFile->Append (ID_LIST_QUIT, _T ("E&xit\tAlt-X"));
