@@ -37,9 +37,9 @@ int monitor_set_xpath (monitorptr m, const xmlChar * xpath);
 int monitor_set_interval (monitorptr m, const xmlChar * ival);
 int monitor_set_trigger (monitorptr m, const xmlChar * trigger);
 const xmlChar *monitor_get_name (const monitorptr m);
-const xmlXPathObjectPtr monitor_get_old_result (const monitorptr m);
-const xmlXPathObjectPtr monitor_get_cur_result (const monitorptr m);
+xmlXPathObjectPtr monitor_get_old_result (const monitorptr m);
+xmlXPathObjectPtr monitor_get_cur_result (const monitorptr m);
 unsigned int monitor_get_interval (const monitorptr m);
-const vpairptr monitor_get_vpair (const monitorptr m);
+vpairptr monitor_get_vpair (const monitorptr m);
 
 #endif /* __WC_MONITOR_H__ */

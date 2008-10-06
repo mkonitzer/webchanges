@@ -357,19 +357,19 @@ monitor_get_name (const monitorptr m)
   return m->name;
 }
 
-const xmlXPathObjectPtr
+xmlXPathObjectPtr
 monitor_get_old_result (const monitorptr m)
 {
   return m->oldres;
 }
 
-const xmlXPathObjectPtr
+xmlXPathObjectPtr
 monitor_get_cur_result (const monitorptr m)
 {
   return m->curres;
 }
 
-const vpairptr
+vpairptr
 monitor_get_vpair (const monitorptr m)
 {
   return m->vp;

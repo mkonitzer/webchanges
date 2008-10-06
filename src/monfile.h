@@ -37,6 +37,6 @@ int monfile_get_next_monitor (const monfileptr mf, monitorptr * mon);
 void monfile_close (monfileptr mf);
 const char *monfile_get_filename (const monfileptr mf);
 const xmlChar *monfile_get_name (const monfileptr mf);
-const basedirptr monfile_get_basedir (const monfileptr mf);
+basedirptr monfile_get_basedir (const monfileptr mf);
 
 #endif /* __WC_MONFILE_H__ */

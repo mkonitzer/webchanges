@@ -216,13 +216,13 @@ vpair_get_cache (const vpairptr vp)
   return vp->cache;
 }
 
-const xmlDocPtr
+xmlDocPtr
 vpair_get_old_doc (const vpairptr vp)
 {
   return vp->olddoc;
 }
 
-const xmlDocPtr
+xmlDocPtr
 vpair_get_cur_doc (const vpairptr vp)
 {
   return vp->curdoc;

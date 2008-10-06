@@ -36,7 +36,7 @@ int vpair_remove (vpairptr vp);
 void vpair_close (vpairptr vp);
 const xmlChar *vpair_get_url (const vpairptr vp);
 const char *vpair_get_cache (const vpairptr vp);
-const xmlDocPtr vpair_get_old_doc (const vpairptr vp);
-const xmlDocPtr vpair_get_cur_doc (const vpairptr vp);
+xmlDocPtr vpair_get_old_doc (const vpairptr vp);
+xmlDocPtr vpair_get_cur_doc (const vpairptr vp);
 
 #endif /* __WC_VPAIR_H__ */

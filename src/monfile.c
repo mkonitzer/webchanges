@@ -319,7 +319,7 @@ monfile_get_name (const monfileptr mf)
   return mf->name;
 }
 
-const basedirptr
+basedirptr
 monfile_get_basedir (const monfileptr mf)
 {
   return (mf == NULL ? NULL : mf->bd);
