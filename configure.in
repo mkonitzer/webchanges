@@ -39,6 +39,10 @@ AC_ARG_VAR(WINDRES, [windres tool path (for WIN32 GUI only)])
 AC_ARG_ENABLE(gui, AC_HELP_STRING([--enable-gui], [Build with GUI]),
     [ if test "${enableval}" = yes; then
 	gui=1
+	AC_CHECK_PROG(cxx_present, $CXX, "yes", "no")
+	if test "x$cxx_present" != "xyes"; then
+	    AC_MSG_ERROR([*** No C++ compiler can be found. You need a C++ compiler to compile GUI.])
+	fi
 	AM_OPTIONS_WXCONFIG
 	AM_PATH_WXCONFIG(2.4.0, wxwidgets=1)
 	if test "${wxwidgets}" != 1; then
