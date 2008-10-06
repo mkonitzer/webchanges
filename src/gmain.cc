@@ -50,6 +50,8 @@
 #define OSFILENAME(X) ((char *) (const char *)(X).mb_str())
 #endif
 
+#define LIBXML2WX(X) (wxString ((const char *) (X), wxConvUTF8))
+
 enum
 {
   ID_LIST_ABOUT = wxID_ABOUT,
@@ -100,7 +102,7 @@ outputf (int l, const char *fmt, ...)
   vsnprintf ((char*) & str, 1023, fmt, args);
   wxListItem item;
   item.SetId (logCtrl->GetItemCount ());
-  item.SetText (wxString (str, wxConvUTF8).Trim());
+  item.SetText (LIBXML2WX (str).Trim());
   switch (l)
     {
     case LVL_WARN:
@@ -139,13 +141,13 @@ xml_errfunc (void *ctx, const char *msg, ...)
 #ifdef SHOW_HTML_ERRORS
   va_list args;
   char str[1024]; // FIXME: allocating constant memory portion, ugly!
-  if (verbosity < LVL_DEBUG)
+  if (lvl_verbos < LVL_DEBUG)
     return;
   va_start (args, msg);
   vsnprintf ((char*) & str, 1023, msg, args);
   wxListItem *item = new wxListItem ();
   item->SetId (logCtrl->GetItemCount ());
-  item->SetText (wxString (str, wxConvUTF8).c_str ());
+  item->SetText (LIBXML2WX (str));
   item->SetBackgroundColour (wxColour (255, 255, 120));
   logCtrl->InsertItem (*item);
   va_end (args);
@@ -169,7 +171,7 @@ xml_strlist_deallocator (xmlLinkPtr lk)
 WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
 {
   int i, j;
-  name = wxString ((char*) monitor_get_name(m), wxConvUTF8);
+  name = LIBXML2WX (monitor_get_name (m));
   lastchk = wxDateTime (monitor_get_last_check(mef, m)).Format ();
 
   /* results comparable? */
@@ -194,20 +196,20 @@ WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
 	      switch (cur->type)
 		{
 		case XML_ATTRIBUTE_NODE:
-		  str = wxString((char *) cur->name, wxConvUTF8);
-		  val = wxString((char *) cur->children->content, wxConvUTF8);
+		  str = LIBXML2WX (cur->name);
+		  val = LIBXML2WX (cur->children->content);
 		  strings.Add (_("(ATTR): ") + str + _(" = \"") + val + _("\""));
 		  break;
 		case XML_COMMENT_NODE:
-		  str = wxString((char *) cur->content, wxConvUTF8);
+		  str = LIBXML2WX (cur->content);
 		  strings.Add (_ ("(COMM): ") + str);
 		  break;
 		case XML_ELEMENT_NODE:
-		  str = wxString((char *) cur->name, wxConvUTF8);
+		  str = LIBXML2WX (cur->name);
 		  strings.Add (_ ("(ELEM): ") + str);
 		  break;
 		case XML_TEXT_NODE:
-		  str = wxString((char *) cur->content, wxConvUTF8);
+		  str = LIBXML2WX (cur->content);
 		  strings.Add (_ ("(TEXT): ") + str);
 		default:
 		  break;
@@ -216,8 +218,8 @@ WcTreeItemData::WcTreeItemData (const monitorptr m, const metafileptr mef)
 	}
       break;
     case XPATH_STRING:
-      old.Add (wxString ((char *) oldres->stringval, wxConvUTF8));
-      cur.Add (wxString ((char *) curres->stringval, wxConvUTF8));
+      old.Add (LIBXML2WX (oldres->stringval));
+      cur.Add (LIBXML2WX (curres->stringval));
       break;
     case XPATH_NUMBER:
       old.Add (wxString::Format(_ ("%.2lf"), oldres->floatval));
@@ -241,7 +243,7 @@ wxTreeItemId
 WcTreeCtrl::AppendMonfile (const monfileptr mf)
 {
   const xmlChar* name = monfile_get_name(mf);
-  wxString wxname = wxString ((char *) name, wxConvUTF8);
+  wxString wxname = LIBXML2WX (name);
   wxTreeItemId node = AppendItem (GetRootItem (), wxname);
   SetItemData (node, NULL);
   return node;
@@ -251,7 +253,7 @@ wxTreeItemId
 WcTreeCtrl::AppendMonitor (const wxTreeItemId& parent, const monitorptr m, const metafileptr mef)
 {
   const xmlChar* name = monitor_get_name(m);
-  wxTreeItemId node = AppendItem (parent, wxString ((char *) name, wxConvUTF8));
+  wxTreeItemId node = AppendItem (parent, LIBXML2WX (name));
   SetItemData (node, new WcTreeItemData(m, mef));
   return node;
 }
