@@ -1,7 +1,8 @@
 #!/usr/bin/make -f
-
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
 
+# Build with GUI enabled.
+DEB_CONFIGURE_EXTRA_FLAGS := --enable-gui
 # Ignore HTML errors by default.
-DEB_CONFIGURE_EXTRA_FLAGS := --enable-html-errors
+#DEB_CONFIGURE_EXTRA_FLAGS += --enable-html-errors
