@@ -407,7 +407,7 @@ WcFrame::OnQuit (wxCommandEvent& WXUNUSED (event))
 void
 WcFrame::OnAbout (wxCommandEvent& WXUNUSED (event))
 {
-  wxMessageBox (_ ("gwebchanges version " VERSION "%s\n"
+  wxMessageBox (_ ("gwebchanges version " VERSION "\n"
 		   "Graphical user interface for webchanges\n\n"
 		   "Copyright (C) 2007, 2008 Marius Konitzer\n\n"
 		   "This is free software; see the source for copying conditions. "
@@ -599,29 +599,29 @@ WcApp::~WcApp ()
 const wxChar*
 WcApp::usage (void)
 {
-  return wxT ("Usage: gwebchanges COMMAND [OPTION]... FILE...\n\n"
-	      "Commands:\n"
-	      "  -i  initialize monitor file, download into cache\n"
-	      "  -c  check monitor file for changes\n"
-	      "  -u  check monitor file for changes and update cache\n"
-	      "  -r  remove files associated with monitor file from cache\n"
-	      "  -h  display this help and exit\n"
-	      "  -V  display version & copyright information and exit\n\n"
-	      "Options:\n"
-	      "  -f  force checking/updating of all monitors now\n"
-	      "  -b  set base directory\n"
-	      "  -q  quiet mode, suppress most stdout messages\n"
-	      "  -v  verbose mode, repeat to increase stdout messages");
+  return _ ("Usage: gwebchanges COMMAND [OPTION]... FILE...\n\n"
+	    "Commands:\n"
+	    "  -i  initialize monitor file, download into cache\n"
+	    "  -c  check monitor file for changes\n"
+	    "  -u  check monitor file for changes and update cache\n"
+	    "  -r  remove files associated with monitor file from cache\n"
+	    "  -h  display this help and exit\n"
+	    "  -V  display version & copyright information and exit\n\n"
+	    "Options:\n"
+	    "  -f  force checking/updating of all monitors now\n"
+	    "  -b  set base directory\n"
+	    "  -q  quiet mode, suppress most stdout messages\n"
+	    "  -v  verbose mode, repeat to increase stdout messages");
 }
 
 const wxChar*
 WcApp::version (void)
 {
-  return wxT ("gwebchanges version %s" VERSION "\n"
-	      "Copyright (C) 2007, 2008 Marius Konitzer\n"
-	      "This is free software; see the source for copying conditions.  "
-	      "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS "
-	      "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
+  return _ ("gwebchanges version " VERSION "\n"
+	    "Copyright (C) 2007, 2008 Marius Konitzer\n"
+	    "This is free software; see the source for copying conditions.  "
+	    "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS "
+	    "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
 }
 
 bool
@@ -719,7 +719,7 @@ WcApp::OnInit ()
   wxMessageOutput::Set (new wxMessageOutputMessageBox);
 
   /* Prepare main window. */
-  WcFrame *frame = new WcFrame (wxT ("gwebchanges"));
+  WcFrame *frame = new WcFrame (_ ("gwebchanges"));
 
   /* Register error function. */
   xmlSetGenericErrorFunc (NULL, xml_errfunc);
