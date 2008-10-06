@@ -1,0 +1,31 @@
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION @RESVERSION@
+PRODUCTVERSION @RESVERSION@
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+FILEFLAGS        VS_FF_DEBUG|VS_FF_PRIVATEBUILD|VS_FF_PRERELEASE
+#else
+FILEFLAGS        VS_FF_SPECIALBUILD
+#endif
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904b0"
+        {
+            VALUE "FileDescription", "webchanges can keep track of user-defined important changes to (X)HTML-based webpages."
+            VALUE "FileVersion", "@VERSION@"
+            VALUE "InternalName", "gwebchanges"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2008 Marius Konitzer"
+            VALUE "OriginalFilename", "gwebchanges.exe"
+            VALUE "ProductName", "webchanges"
+            VALUE "ProductVersion", "@VERSION@"
+            VALUE "SpecialBuild", "$Revision$, built on " __DATE__ ", " __TIME__ " with compiler version " __VERSION__ "."
+        }
+    }
+}
+
+IDI_APPICON ICON DISCARDABLE "gmain.ico"

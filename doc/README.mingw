@@ -63,5 +63,5 @@ Debian (http://www.debian.org) lenny system as shown below.
     make install
 
 * Compile webchanges:
-    ./configure --prefix=$MINGWPREFIX --enable-gui
+    ./configure --build=mingw32 --prefix=$MINGWPREFIX --enable-gui
     make

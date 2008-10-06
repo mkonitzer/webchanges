@@ -14,6 +14,11 @@ gwebchanges_CFLAGS = -x c++ $(WX_CFLAGS_ONLY)
 gwebchanges_CXXFLAGS = $(WX_CXXFLAGS_ONLY)
 gwebchanges_CPPFLAGS = $(WX_CPPFLAGS)
 gwebchanges_LDADD = $(WX_LIBS) $(LDADD)
+if COMPILE_GUI_RESOURCE
+gwebchanges_SOURCES += gmain-res.rc
+.rc.o:
+	$(WINDRES) $(WINDRESFLAGS) $^ -o $@
+endif
 endif
 
 webchanges_SOURCES = main.c basedir.c basedir.h global.h monfile.c monfile.h monfile_dtd.inc metafile.c metafile.h monitor.c monitor.h vpair.c vpair.h sha1.c sha1.h
