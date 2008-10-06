@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 AC_INIT(src/main.c)
-AC_SUBST(VERSION, "0.7.2")
+AC_SUBST(VERSION, "0.8.0")
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_FILES([Makefile src/Makefile src/gmain-res.rc doc/Makefile])
 AC_CONFIG_FILES([solaris/makepkg.sh solaris/pkginfo], [chmod +x solaris/makepkg.sh])

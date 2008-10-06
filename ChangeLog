@@ -1,3 +1,12 @@
+2008-10-06  Marius Konitzer  <m.konitzer@gmx.de>
+
+        Released 0.8.0.
+
+	* GUI version of webchanges using wxWidgets.
+	* Base directory handling (-b).
+	* Make (g)webchanges compile in Cygwin and MinGW environments.
+	* Some bug-fixes, remove compiler warnings.
+
 2007-07-06  Marius Konitzer  <m.konitzer@gmx.de>
 
         Released 0.7.2.

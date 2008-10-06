@@ -1,14 +1,24 @@
-webchanges (0.7.2-1) unstable; urgency=low
+webchanges (0.8.0) unstable; urgency=low
+
+  * New release 0.8.0.
+  * Add GUI package.
+  * Add 'Homepage:' field to debian/control.
+  * Update copyright information.
+  * Build webchanges without 'Enable HTML errors' option.
+
+ -- Marius Konitzer <m.konitzer@gmx.de>  Mon, 06 Oct 2008 14:48:51 +0200
+
+webchanges (0.7.2) unstable; urgency=low
 
   * New release 0.7.2.
   * Include webchanges DTD (wc1.dtd) in doc.
 
- --  <marius@shannon.lpi.ruhr-uni-bochum.de>  Fri,  6 Jul 2007 16:22:51 +0200
+ -- Marius Konitzer <m.konitzer@gmx.de>  Fri,  6 Jul 2007 16:22:51 +0200
 
-webchanges (0.7.1-1) unstable; urgency=low
+webchanges (0.7.1) unstable; urgency=low
 
   [ Marius Konitzer ]
   * Initial release
 
- --  <marius@shannon.lpi.ruhr-uni-bochum.de>  Fri,  6 Jul 2007 16:12:40 +0200
+ -- Marius Konitzer <m.konitzer@gmx.de>  Fri,  6 Jul 2007 16:12:40 +0200
 
