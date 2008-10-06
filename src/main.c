@@ -1,7 +1,7 @@
 /* $Id$ */
 /* webchanges -- monitor parts of webpages for changes in content
 
-   Copyright (C) 2006, 2007  Marius Konitzer
+   Copyright (C) 2006, 2007, 2008  Marius Konitzer
 
    webchanges is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -328,7 +328,7 @@ static void
 version (void)
 {
   printf ("webchanges version %s\n", VERSION);
-  printf ("Copyright (C) 2006, 2007 Marius Konitzer\n");
+  printf ("Copyright (C) 2006, 2007, 2008 Marius Konitzer\n");
   printf ("This is free software; see the source for copying conditions.  ");
   printf ("There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS ");
   printf ("FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.\n");

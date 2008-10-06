@@ -1,7 +1,7 @@
 /* $Id$ */
 /* gwebchanges -- graphical user interface for webchanges
 
-   Copyright (C) 2007  Marius Konitzer
+   Copyright (C) 2007, 2008  Marius Konitzer
    This file is part of webchanges.
 
    webchanges is free software; you can redistribute it and/or modify

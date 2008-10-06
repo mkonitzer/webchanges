@@ -1,7 +1,7 @@
 /* $Id$ */
 /* gwebchanges -- graphical user interface for webchanges
 
-   Copyright (C) 2007  Marius Konitzer
+   Copyright (C) 2007, 2008  Marius Konitzer
    This file is part of webchanges.
 
    webchanges is free software; you can redistribute it and/or modify
@@ -345,14 +345,14 @@ WcFrame::WcFrame (const wxChar *title) : wxFrame (NULL, wxID_ANY, title)
     SetSize (wxSize (550, 400));
 
   // main window icon
-  #if !defined(__WXMSW__)
+#if !defined(__WXMSW__)
   wxIconBundle iconsMain (wxICON (gmain32));
   iconsMain.AddIcon (wxICON (gmain16));
   iconsMain.AddIcon (wxICON (gmain48));
   SetIcons (iconsMain);
-  #else
+#else
   SetIcon (wxICON (IDI_APPICON));
-  #endif
+#endif
   // create menu bar
   wxMenu *menuFile = new wxMenu;
   menuFile->Append (ID_LIST_QUIT, _T ("E&xit\tAlt-X"));
@@ -402,13 +402,12 @@ WcFrame::OnQuit (wxCommandEvent& WXUNUSED (event))
 void
 WcFrame::OnAbout (wxCommandEvent& WXUNUSED (event))
 {
-  wxMessageBox (wxString::Format (_ ("gwebchanges version %s\n"
-                                     "Graphical user interface for webchanges\n\n"
-                                     "Copyright (C) 2007 Marius Konitzer\n\n"
-                                     "This is free software; see the source for copying conditions. "
-                                     "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR "
-                                     "A PARTICULAR PURPOSE, to the extent permitted by law."),
-                                  wxT (VERSION)),
+  wxMessageBox (_ ("gwebchanges version " VERSION "%s\n"
+                   "Graphical user interface for webchanges\n\n"
+                   "Copyright (C) 2007, 2008 Marius Konitzer\n\n"
+                   "This is free software; see the source for copying conditions. "
+                   "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR "
+                   "A PARTICULAR PURPOSE, to the extent permitted by law."),
                 _ ("About gwebchanges"), wxOK | wxICON_INFORMATION);
 }
 
@@ -594,28 +593,28 @@ WcApp::~WcApp ()
 const wxChar*
 WcApp::usage (void)
 {
-  return wxT ("Usage: webchanges COMMAND [OPTION]... FILE...\n\n" \
-              "Commands:\n" \
-              "  -i  initialize monitor file, download into cache\n" \
-              "  -c  check monitor file for changes\n" \
-              "  -u  check monitor file for changes and update cache\n" \
-              "  -r  remove files associated with monitor file from cache\n" \
-              "  -h  display this help and exit\n" \
-              "  -V  display version & copyright information and exit\n\n" \
-              "Options:\n" \
-              "  -f  force checking/updating of all monitors now\n" \
-              "  -b  set base directory\n" \
-              "  -q  quiet mode, suppress most stdout messages\n" \
+  return wxT ("Usage: gwebchanges COMMAND [OPTION]... FILE...\n\n"
+              "Commands:\n"
+              "  -i  initialize monitor file, download into cache\n"
+              "  -c  check monitor file for changes\n"
+              "  -u  check monitor file for changes and update cache\n"
+              "  -r  remove files associated with monitor file from cache\n"
+              "  -h  display this help and exit\n"
+              "  -V  display version & copyright information and exit\n\n"
+              "Options:\n"
+              "  -f  force checking/updating of all monitors now\n"
+              "  -b  set base directory\n"
+              "  -q  quiet mode, suppress most stdout messages\n"
               "  -v  verbose mode, repeat to increase stdout messages");
 }
 
 const wxChar*
 WcApp::version (void)
 {
-  return wxT ("webchanges version %s\n" VERSION \
-              "Copyright (C) 2006, 2007 Marius Konitzer\n" \
-              "This is free software; see the source for copying conditions.  " \
-              "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS " \
+  return wxT ("gwebchanges version %s" VERSION "\n"
+              "Copyright (C) 2007, 2008 Marius Konitzer\n"
+              "This is free software; see the source for copying conditions.  "
+              "There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS "
               "FOR A PARTICULAR PURPOSE,\nto the extent permitted by law.");
 }
 
