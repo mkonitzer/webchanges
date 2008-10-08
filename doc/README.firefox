@@ -1,0 +1,64 @@
+Here is what you need to do, to	make XPather's expressions compatible to
+libxml2:
+
+1) Apply the patch below (doing "patch -p4 < README.firefox") to get rid
+   of the insolently inserted <tbody> elements by its HTML parser.
+   The patch is against CVS HEAD 2007-01-05.
+
+2) Insert pref("parser.allowtraschildoftable", true); into
+   $PREFIX/lib/firefox-1.5.0.7/defaults/pref/firefox.js or set this value
+   in Firefox preferences (enter "about:config" as URL).
+
+--- mozilla/parser/htmlparser/src/CNavDTD.cpp	2007-01-05 23:18:14.000000000 +0100
++++ mozilla/parser/htmlparser/src/CNavDTD.cpp.new	2007-03-09 20:10:13.000000000 +0100
+@@ -66,6 +66,8 @@
+ #include "nsUnicharUtils.h"
+ #include "prmem.h"
+ #include "nsIServiceManager.h"
++#include "nsIPrefBranch.h"
++#include "nsIPrefService.h"
+ 
+ #ifdef NS_DEBUG
+ #include "nsLoggingSink.h"
+@@ -2375,15 +2377,16 @@
+ {
+   PRBool result=gHTMLElements[aParent].CanContain((eHTMLTags)aChild,mDTDMode);
+ 
+-#ifdef ALLOW_TR_AS_CHILD_OF_TABLE
+-  if(!result) {
++  PRBool trAsChildOfTableAllowed;
++  nsCOMPtr<nsIPrefBranch> prefBranch(do_GetService(NS_PREFSERVICE_CONTRACTID));
++  nsresult rv=prefBranch->GetBoolPref("parser.allowtraschildoftable", &trAsChildOfTableAllowed);
++  if(!NS_FAILED(rv) && trAsChildOfTableAllowed && !result) {
+       //XXX This vile hack is here to support bug 30378, which allows
+       //table to contain tr directly in an html32 document.
+     if((eHTMLTag_tr==aChild) && (eHTMLTag_table==aParent)) {
+       result=PR_TRUE;
+     }
+   }
+-#endif
+ 
+   if(eHTMLTag_nobr==aChild) {
+     if(IsInlineElement(aParent,aParent)){
+@@ -3650,16 +3653,18 @@
+ 
+   //now, build up the stack according to the tags 
+   //you have that aren't in the stack...
++  PRBool trAsChildOfTableAllowed;
++  nsCOMPtr<nsIPrefBranch> prefBranch(do_GetService(NS_PREFSERVICE_CONTRACTID));
++  nsresult rv=prefBranch->GetBoolPref("parser.allowtraschildoftable", &trAsChildOfTableAllowed);
+   if(PR_TRUE==bResult){
+     while(theLen) {
+       theTag=(eHTMLTags)mScratch[--theLen];
+ 
+-#ifdef ALLOW_TR_AS_CHILD_OF_TABLE
+-      if((eHTML3_Quirks==mDocType) && (eHTMLTag_tbody==theTag)) {
++      if(!NS_FAILED(rv) && trAsChildOfTableAllowed &&
++        (eHTML3_Quirks==mDocType) && (eHTMLTag_tbody==theTag)) {
+         //the prev. condition prevents us from emitting tbody in html3.2 docs; fix bug 30378
+         continue;
+       }
+-#endif
+       CStartToken *theToken=(CStartToken*)mTokenAllocator->CreateTokenOfType(eToken_start,theTag);
+       HandleToken(theToken,mParser);  //these should all wind up on contextstack, so don't recycle.
+     }
