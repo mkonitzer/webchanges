@@ -61,21 +61,18 @@ AC_ARG_ENABLE(gui, AC_HELP_STRING([--enable-gui], [Build with GUI]),
 	AC_MSG_CHECKING([whether windres is needed])
 	case "${host}" in
 	    *-mingw32*|*cygwin*)
-		if test -z "$host_alias"; then
-		    hostaliaswindres=
-		else
-		    hostaliaswindres="$host_alias-windres"
-		fi
 		AC_MSG_RESULT([yes])
+
+		dnl Try to find windres executable.
 		if test "x$WINDRES" != "x"; then
-		    windres="$WINDRES"
+		    AC_PATH_PROG([windres], [$WINDRES])
 		else
-		    windres="windres"
+		    AC_CHECK_TOOL([windres], [windres])
 		fi
-		AC_PATH_PROGS([WINDRES], [$windres $hostaliaswindres $host_os-windres])
-		if test "x$WINDRES" = "x"; then
-		    AC_MSG_ERROR([windres could not be found, please make sure this program is within your path.])
+		if test "x$windres" = "x"; then
+		    AC_MSG_ERROR([*** 'windres' could not be found, please make sure this program is within your path or set \$WINDRES manually.])
 		fi
+		WINDRES=$windres
 		gui_resfile=1
 
 		dnl Check for windres include flags if needed.
