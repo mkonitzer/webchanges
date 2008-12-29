@@ -18,11 +18,17 @@
    along with webchanges; if not, write to the Free Software Foundation,
    Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <libxml/HTMLparser.h>
 #include <libxml/xmlIO.h>
 #include <libxml/tree.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
+#endif
 #include "global.h"
 #include "vpair.h"
 #include "sha1.h"
@@ -80,11 +86,43 @@ vpair_open (const xmlChar * url, const basedirptr bd)
   return vp;
 }
 
+#ifdef HAVE_LIBCURL
+static size_t
+curl2libxml_writer (void *ptr, size_t size, size_t nmemb, void *stream)
+{
+  xmlParserInputBufferPtr buf = (xmlParserInputBufferPtr) stream;
+  if (buf == NULL)
+    return -1;
+  return xmlParserInputBufferPush (buf, size * nmemb, (const char *) ptr);
+}
+#endif
+
 static xmlParserInputBufferPtr
 read_into_buffer (const char *filename)
 {
-  int read;
   xmlParserInputBufferPtr buf;
+#ifdef HAVE_LIBCURL
+  CURL *curl;
+  CURLcode res;
+
+  /* open document */
+  buf = xmlAllocParserInputBuffer (XML_CHAR_ENCODING_NONE);
+
+  /* read document */
+  if ((curl = curl_easy_init ()) == NULL)
+    {
+      outputf (LVL_ERR, "[vpair] Unable to initialize curl\n");
+      return NULL;
+    }
+  curl_easy_setopt (curl, CURLOPT_NOPROGRESS, 1);
+  curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, &curl2libxml_writer);
+  curl_easy_setopt (curl, CURLOPT_WRITEDATA, buf);
+  curl_easy_setopt (curl, CURLOPT_URL, filename);
+  res = curl_easy_perform (curl);
+  curl_easy_cleanup (curl);
+#else
+  int read;
+
   /* open document */
   if ((buf =
        xmlParserInputBufferCreateFilename (filename,
@@ -101,6 +139,7 @@ read_into_buffer (const char *filename)
       xmlFreeParserInputBuffer (buf);
       return NULL;
     }
+#endif
   return buf;
 }
 
