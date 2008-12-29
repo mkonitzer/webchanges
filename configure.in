@@ -28,8 +28,11 @@ AC_CHECK_HEADERS(getopt.h)
 
 dnl Checks for library functions.
 
-dnl Checks for libraries.
+dnl Checks for libxml2 (mandatory).
 AM_PATH_XML2(2.6.0,,AC_MSG_ERROR([*** libxml2 and libxml2-dev >=2.6.0 are required to build webchanges ***]))
+
+dnl Checks for libcurl (optional).
+LIBCURL_CHECK_CONFIG([yes],[7.0],[check_curl=yes],[check_curl=no])
 
 dnl [OPTION] SHOW_HTML_ERRORS
 AC_ARG_ENABLE(htmlerr, AC_HELP_STRING([--enable-html-errors], [Show HTML-errors]), if test $enableval = yes; then AC_DEFINE([SHOW_HTML_ERRORS], [], [Show HTML-errors]) fi)
