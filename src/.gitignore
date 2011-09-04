@@ -1,0 +1,14 @@
+/.deps
+/config.h
+/config.h.in
+/evalxpath
+/evalxpath.exe
+/gmain-res.rc
+/gwebchanges
+/gwebchanges.exe
+/Makefile
+/Makefile.in
+/monfile_dtd.inc
+/stamp-h1
+/webchanges
+/webchanges.exe
